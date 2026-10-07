@@ -16,3 +16,4 @@ Tabla cronológica de avances, decisiones y cambios realizados en el proyecto.
 | **2026-10-07** | 18:23 | Creación del ejecutable `iniciar_comentarista.bat` y paso satisfactorio de las pruebas de integración (`test_app.py`). | IA | 🟢 Completado |
 | **2026-10-07** | 19:50 | **Pivote Estratégico (Feedback Usuario)**: Enfoque prioritario en Fact-Checking, Búsqueda de Noticias y Generación Automática de Infografías 16:9. | Usuario + IA | 🟢 Aprobado |
 | **2026-10-07** | 19:53 | Implementación de `fact_checker.py` e `infographic_generator.py` (con resolución del caso "RESA" vs "SRAD"). Pruebas superadas. | IA | 🟢 Completado |
+| **2026-10-07** | 20:05 | **Bucle de Refinamiento Iterativo (Feedback Loop)**: Implementación del módulo de comentarios de usuario para modificar el tweet en vivo, historial de versiones (`v1`, `v2`, `v3`) con deshacer/rehacer y píldoras rápidas (`✂️ Más corto`, `📊 Más datos`, `🏷️ @RedElectricaREE`). | Usuario + IA | 🟢 Completado |

@@ -14,7 +14,7 @@ from app.core.grafana_client import (
     get_dashboard_panels,
     render_panel
 )
-from app.core.ai_engine import refine_tweet
+from app.core.ai_engine import refine_tweet, modify_tweet_with_feedback
 from app.core.fact_checker import analyze_and_factcheck
 
 load_dotenv()
@@ -38,6 +38,12 @@ class GenerateRequest(BaseModel):
     idea: str
     tone: Optional[str] = "Divulgativo"
     context_info: Optional[str] = ""
+
+class RefineRequest(BaseModel):
+    current_text: str
+    feedback: str
+    fact_context: Optional[str] = ""
+    tone: Optional[str] = "Divulgativo"
 
 class RenderGrafanaRequest(BaseModel):
     dashboard_uid: str
@@ -116,6 +122,26 @@ async def factcheck_and_generate(req: GenerateRequest):
     if not req.idea or not req.idea.strip():
         raise HTTPException(status_code=400, detail="La idea no puede estar vacía")
     result = analyze_and_factcheck(req.idea)
+    return result
+
+@app.post("/api/refine")
+async def refine_tweet_post(req: RefineRequest):
+    """
+    Refinamiento iterativo guiado por los comentarios del usuario:
+    Toma el tweet que está actualmente en el simulador y aplica las modificaciones,
+    acortamientos, adiciones de datos o cambios de tono solicitados.
+    """
+    if not req.current_text or not req.current_text.strip():
+        raise HTTPException(status_code=400, detail="El tweet actual está vacío")
+    if not req.feedback or not req.feedback.strip():
+        raise HTTPException(status_code=400, detail="La instrucción o comentario no puede estar vacía")
+    
+    result = modify_tweet_with_feedback(
+        current_text=req.current_text,
+        feedback=req.feedback,
+        fact_context=req.fact_context or "",
+        tone=req.tone or "Divulgativo"
+    )
     return result
 
 @app.post("/api/upload")

@@ -245,6 +245,52 @@
         </div>
       </div>
 
+      <!-- BUCLE DE REFINAMIENTO INTERACTIVO POR COMENTARIOS -->
+      <div class="feedback-loop-card">
+        <div class="feedback-loop-header">
+          <div class="feedback-title-group">
+            <span class="feedback-icon">💬</span>
+            <span class="feedback-title">Refinar con tus comentarios</span>
+          </div>
+          <div class="version-controls">
+            <span id="tweet-version-badge" class="version-badge">v1</span>
+            <button type="button" id="btn-undo-version" class="btn-version-nav" disabled title="Deshacer cambio">↩️ Deshacer</button>
+            <button type="button" id="btn-redo-version" class="btn-version-nav" disabled title="Rehacer cambio">↪️ Rehacer</button>
+          </div>
+        </div>
+
+        <p class="feedback-hint">Escribe cualquier cambio y la IA modificará el tweet en vivo:</p>
+
+        <!-- Píldoras rápidas de 1 clic -->
+        <div class="quick-chips-row">
+          <button type="button" class="quick-chip" data-instruction="Hazlo más corto y conciso">✂️ Más corto</button>
+          <button type="button" class="quick-chip" data-instruction="Añade datos numéricos y métricas clave">📊 Más cifras</button>
+          <button type="button" class="quick-chip" data-instruction="Integra la mención oficial @RedElectricaREE">🏷️ @RedElectricaREE</button>
+          <button type="button" class="quick-chip" data-instruction="Dale un tono de alerta urgente y rotundo">🚨 Más impacto</button>
+          <button type="button" class="quick-chip" data-instruction="Hazlo más didáctico y sencillo para el público">💡 Más divulgativo</button>
+        </div>
+
+        <!-- Input de comentarios de cambio -->
+        <form id="form-refine" class="feedback-input-wrapper">
+          <input 
+            type="text" 
+            id="feedback-input" 
+            class="feedback-input-text" 
+            placeholder="Ej: Quita adjetivos, enfócalo en los costes de la industria..." 
+            autocomplete="off"
+          >
+          <button type="submit" id="btn-submit-feedback" class="btn btn-primary btn-submit-feedback">
+            <span>⚡ Modificar</span>
+          </button>
+        </form>
+
+        <!-- Historial / Explicación del cambio -->
+        <div id="feedback-log" class="feedback-log-box" style="display: none;">
+          <span class="feedback-log-title">Último cambio aplicado:</span>
+          <p id="feedback-log-text" class="feedback-log-text"></p>
+        </div>
+      </div>
+
       <!-- BARRA DE ACCIÓN EN 1 CLIC -->
       <div class="actions-panel">
         <button type="button" id="btn-copy-text" class="btn btn-action-copy">

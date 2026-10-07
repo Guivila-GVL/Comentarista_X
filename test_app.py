@@ -57,6 +57,20 @@ def run_tests():
     for v in fc_data["variants"]:
         print(f"  - [{v['tone']}] ({v['char_count']} chars): {v['text'][:70]}...")
 
+    print("\n--- 7. Testing Iterative Refinement Feedback Loop ---")
+    current_tweet = fc_data["variants"][0]["text"]
+    r = client.post("/api/refine", json={
+        "current_text": current_tweet,
+        "feedback": "Hazlo más corto y añade la mención a @RedElectricaREE",
+        "fact_context": fc_data["fact_check"]["explanation"]
+    })
+    assert r.status_code == 200, f"Refine failed: {r.status_code}"
+    refine_data = r.json()
+    print("[PASS] Refined tweet:", refine_data["updated_text"])
+    print("[PASS] Explanation of change:", refine_data["explanation"])
+    print("[PASS] Length:", refine_data["char_count"], "/ 280")
+    assert refine_data["char_count"] <= 280, "Char limit exceeded"
+
     print("\n===============================")
     print("ALL APP INTEGRATION TESTS PASSED!")
     print("===============================")

@@ -386,6 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // Cargar por defecto la primera variante en el simulador
           liveEditor.value = data.variants[0].text;
           liveEditor.dataset.userEdited = "true";
+          pushVersion(data.variants[0].text, "Borrador inicial generado");
           updateCharCounter();
         }
 
@@ -399,6 +400,151 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // ==========================================
+  // 5.1. BUCLE DE REFINAMIENTO INTERACTIVO (FEEDBACK)
+  // ==========================================
+  const tweetHistory = [];
+  let historyIndex = -1;
+
+  const tweetVersionBadge = document.getElementById("tweet-version-badge");
+  const btnUndoVersion = document.getElementById("btn-undo-version");
+  const btnRedoVersion = document.getElementById("btn-redo-version");
+  const formRefine = document.getElementById("form-refine");
+  const feedbackInput = document.getElementById("feedback-input");
+  const feedbackLog = document.getElementById("feedback-log");
+  const feedbackLogText = document.getElementById("feedback-log-text");
+  const quickChips = document.querySelectorAll(".quick-chip");
+
+  function pushVersion(text, explanation = "") {
+    if (historyIndex >= 0 && tweetHistory[historyIndex]?.text === text) return;
+    
+    // Si estamos navegando en el historial y se aplica un nuevo cambio, truncamos el futuro
+    if (historyIndex < tweetHistory.length - 1) {
+      tweetHistory.splice(historyIndex + 1);
+    }
+    tweetHistory.push({ text, explanation });
+    historyIndex = tweetHistory.length - 1;
+    updateVersionControls();
+  }
+
+  function updateVersionControls() {
+    if (tweetVersionBadge) {
+      tweetVersionBadge.textContent = `v${historyIndex + 1}`;
+    }
+    if (btnUndoVersion) {
+      btnUndoVersion.disabled = historyIndex <= 0;
+    }
+    if (btnRedoVersion) {
+      btnRedoVersion.disabled = historyIndex >= tweetHistory.length - 1;
+    }
+  }
+
+  if (btnUndoVersion) {
+    btnUndoVersion.addEventListener("click", () => {
+      if (historyIndex > 0) {
+        historyIndex--;
+        const v = tweetHistory[historyIndex];
+        liveEditor.value = v.text;
+        updateCharCounter();
+        updateVersionControls();
+        if (v.explanation && feedbackLog && feedbackLogText) {
+          feedbackLog.style.display = "flex";
+          feedbackLogText.textContent = `Vuelto a v${historyIndex + 1}: ${v.explanation}`;
+        }
+        showToast(`↩️ Vuelto a la versión v${historyIndex + 1}`);
+      }
+    });
+  }
+
+  if (btnRedoVersion) {
+    btnRedoVersion.addEventListener("click", () => {
+      if (historyIndex < tweetHistory.length - 1) {
+        historyIndex++;
+        const v = tweetHistory[historyIndex];
+        liveEditor.value = v.text;
+        updateCharCounter();
+        updateVersionControls();
+        if (v.explanation && feedbackLog && feedbackLogText) {
+          feedbackLog.style.display = "flex";
+          feedbackLogText.textContent = `Avanzado a v${historyIndex + 1}: ${v.explanation}`;
+        }
+        showToast(`↪️ Avanzado a la versión v${historyIndex + 1}`);
+      }
+    });
+  }
+
+  async function executeRefinement(instruction) {
+    const currentText = liveEditor.value.trim();
+    if (!currentText) {
+      showToast("⚠️ El tweet actual está vacío");
+      return;
+    }
+    if (!instruction) {
+      showToast("⚠️ Escribe qué cambio deseas hacer");
+      return;
+    }
+
+    const btnSubmit = document.getElementById("btn-submit-feedback");
+    const originalBtnText = btnSubmit ? btnSubmit.innerHTML : "";
+    if (btnSubmit) {
+      btnSubmit.innerHTML = '<span>⏳ Aplicando...</span>';
+      btnSubmit.disabled = true;
+    }
+
+    try {
+      const res = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          current_text: currentText,
+          feedback: instruction,
+          fact_context: factCheckExplanation ? factCheckExplanation.textContent : "",
+          tone: document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo"
+        })
+      });
+
+      if (!res.ok) throw new Error("Error en refinamiento");
+      const data = await res.json();
+
+      if (data.updated_text) {
+        liveEditor.value = data.updated_text;
+        liveEditor.dataset.userEdited = "true";
+        pushVersion(data.updated_text, data.explanation || instruction);
+        updateCharCounter();
+
+        if (feedbackLog && feedbackLogText) {
+          feedbackLog.style.display = "flex";
+          feedbackLogText.textContent = data.explanation || "Modificación aplicada correctamente.";
+        }
+        if (feedbackInput) feedbackInput.value = "";
+        showToast("⚡ ¡Tweet modificado según tu comentario!");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Error al aplicar el cambio");
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.innerHTML = originalBtnText;
+        btnSubmit.disabled = false;
+      }
+    }
+  }
+
+  if (formRefine) {
+    formRefine.addEventListener("submit", (e) => {
+      e.preventDefault();
+      executeRefinement(feedbackInput.value.trim());
+    });
+  }
+
+  quickChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      const inst = chip.dataset.instruction;
+      if (feedbackInput) feedbackInput.value = inst;
+      executeRefinement(inst);
+    });
+  });
 
   function renderVariants(variants) {
     if (!variants || variants.length === 0) {
@@ -421,6 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
       card.addEventListener("click", () => {
         liveEditor.value = v.text;
         liveEditor.dataset.userEdited = "true";
+        pushVersion(v.text, `Seleccionada variante: ${v.tone}`);
         updateCharCounter();
         showToast(`Variante "${v.tone}" cargada en el simulador`);
       });
