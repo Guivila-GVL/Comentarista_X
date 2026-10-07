@@ -40,9 +40,22 @@ def run_tests():
     })
     assert r.status_code == 200, f"Generate failed: {r.status_code}"
     variants = r.json().get("variants", [])
-    print(f"[PASS] Generated {len(variants)} variants:")
-    for v in variants:
-        print(f"  - [{v.get('tone')}] ({v.get('char_count')} chars): {v.get('text')}")
+    print(f"[PASS] Generated {len(variants)} variants")
+
+    print("\n--- 6. Testing Fact-Checking & Infographic Pipeline (User Case: RESA) ---")
+    user_idea = "El sistema de protección RESA se ha activado otra vez. El deterioro de nuestra infraestructura eléctrica no para."
+    r = client.post("/api/factcheck-and-generate", json={
+        "idea": user_idea,
+        "tone": "Divulgativo"
+    })
+    assert r.status_code == 200, f"Factcheck failed: {r.status_code}"
+    fc_data = r.json()
+    print("[PASS] Fact-check verdict:", fc_data["fact_check"]["verdict"])
+    print("[PASS] News reference:", fc_data["news"][0]["title"])
+    print("[PASS] Infographic created:", fc_data["infographic_url"])
+    print("[PASS] Verified variants count:", len(fc_data["variants"]))
+    for v in fc_data["variants"]:
+        print(f"  - [{v['tone']}] ({v['char_count']} chars): {v['text'][:70]}...")
 
     print("\n===============================")
     print("ALL APP INTEGRATION TESTS PASSED!")

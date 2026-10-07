@@ -15,6 +15,7 @@ from app.core.grafana_client import (
     render_panel
 )
 from app.core.ai_engine import refine_tweet
+from app.core.fact_checker import analyze_and_factcheck
 
 load_dotenv()
 
@@ -101,6 +102,20 @@ async def generate_variants(req: GenerateRequest):
     if not req.idea or not req.idea.strip():
         raise HTTPException(status_code=400, detail="La idea no puede estar vacía")
     result = refine_tweet(req.idea, tone=req.tone or "Divulgativo", context_info=req.context_info or "")
+    return result
+
+@app.post("/api/factcheck-and-generate")
+async def factcheck_and_generate(req: GenerateRequest):
+    """
+    Pipeline integral solicitado:
+    1. Verifica la afirmación y terminología (fact-checking).
+    2. Busca noticias reales y respaldo documental.
+    3. Genera una infografía 16:9 explicativa.
+    4. Genera variantes de tweets con datos contrastados y enlaces a fuentes.
+    """
+    if not req.idea or not req.idea.strip():
+        raise HTTPException(status_code=400, detail="La idea no puede estar vacía")
+    result = analyze_and_factcheck(req.idea)
     return result
 
 @app.post("/api/upload")

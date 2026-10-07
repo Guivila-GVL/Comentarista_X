@@ -14,3 +14,5 @@ Tabla cronológica de avances, decisiones y cambios realizados en el proyecto.
 | **2026-10-07** | 18:22 | Desarrollo del backend FastAPI (`app/main.py`), conector Grafana y motor de IA contextual. | IA | 🟢 Completado |
 | **2026-10-07** | 18:22 | Creación de la interfaz Web (`index.html`, `style.css`, `app.js`) con simulador idéntico a X y Vanilla CSS. | IA | 🟢 Completado |
 | **2026-10-07** | 18:23 | Creación del ejecutable `iniciar_comentarista.bat` y paso satisfactorio de las pruebas de integración (`test_app.py`). | IA | 🟢 Completado |
+| **2026-10-07** | 19:50 | **Pivote Estratégico (Feedback Usuario)**: Enfoque prioritario en Fact-Checking, Búsqueda de Noticias y Generación Automática de Infografías 16:9. | Usuario + IA | 🟢 Aprobado |
+| **2026-10-07** | 19:53 | Implementación de `fact_checker.py` e `infographic_generator.py` (con resolución del caso "RESA" vs "SRAD"). Pruebas superadas. | IA | 🟢 Completado |

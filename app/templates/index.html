@@ -48,8 +48,8 @@
         <textarea 
           id="raw-idea" 
           class="custom-textarea" 
-          rows="4" 
-          placeholder="Ej: Hoy el precio del pool eléctrico ha marcado 0,00 €/MWh durante 6 horas por la gran producción eólica. Las baterías y el bombeo han estado absorbiendo excedentes a coste mínimo..."
+          rows="3" 
+          placeholder="Ej: El sistema de protección RESA se ha activado otra vez. El deterioro de nuestra infraestructura eléctrica no para..."
         ></textarea>
       </div>
 
@@ -72,73 +72,100 @@
         </div>
       </div>
 
-      <!-- Selector Multimedia (Grafana vs Archivo Local) -->
-      <div class="form-group media-section">
-        <div class="media-tabs-header">
-          <label class="input-label">Recurso Multimedia</label>
-          <div class="tabs-nav">
-            <button type="button" id="tab-btn-grafana" class="tab-btn active">📊 Grafana Local</button>
-            <button type="button" id="tab-btn-local" class="tab-btn">📁 Subir Archivo</button>
-          </div>
+      <!-- BOTÓN PRINCIPAL: INVESTIGAR, FACT-CHECK & GENERAR INFOGRAFÍA -->
+      <div class="main-cta-wrapper">
+        <button type="button" id="btn-factcheck-ai" class="btn btn-primary btn-cta-glow btn-block">
+          <span class="btn-icon">🔍</span> Investigar, Fact-Check & Generar Infografía
+        </button>
+      </div>
+
+      <!-- SECCIÓN DE FACT-CHECKING Y NOTICIAS (DINÁMICO) -->
+      <div id="factcheck-container" class="factcheck-card" style="display: none;">
+        <div class="factcheck-header">
+          <span id="factcheck-verdict-badge" class="badge-verdict">⚠️ Verificación</span>
+          <span class="factcheck-tag">Fact-Checking</span>
+        </div>
+        <div id="factcheck-explanation" class="factcheck-text"></div>
+
+        <!-- Noticia respaldada -->
+        <div id="factcheck-news-box" class="news-reference-box">
+          <div class="news-header-label">📰 Noticia / Respaldo Documental:</div>
+          <a id="factcheck-news-title" href="#" target="_blank" class="news-link"></a>
+          <div id="factcheck-news-source" class="news-meta"></div>
+          <p id="factcheck-news-summary" class="news-summary"></p>
         </div>
 
-        <!-- Tab 1: Grafana Directo -->
-        <div id="tab-content-grafana" class="tab-content active">
-          <div class="grafana-grid">
-            <div class="select-field">
-              <label for="grafana-dashboard">Cuadro de Mando</label>
-              <select id="grafana-dashboard" class="custom-select">
-                <option value="">Cargando dashboards...</option>
-              </select>
-            </div>
-            <div class="select-field">
-              <label for="grafana-panel">Panel a Capturar</label>
-              <select id="grafana-panel" class="custom-select" disabled>
-                <option value="">Selecciona un dashboard primero</option>
-              </select>
-            </div>
-          </div>
-          <div class="grafana-actions-row">
-            <div class="select-field range-select">
-              <label for="grafana-range">Rango de Tiempo</label>
-              <select id="grafana-range" class="custom-select">
-                <option value="now-24h">Últimas 24 horas</option>
-                <option value="now-7d">Últimos 7 días</option>
-                <option value="now-30d">Últimos 30 días</option>
-                <option value="now/d">Hoy (Desde las 00:00h)</option>
-              </select>
-            </div>
-            <button type="button" id="btn-render-grafana" class="btn btn-secondary">
-              <span class="btn-icon">🔄</span> Cargar Gráfico de Grafana
-            </button>
-          </div>
-        </div>
-
-        <!-- Tab 2: Archivo Local -->
-        <div id="tab-content-local" class="tab-content">
-          <div id="dropzone" class="dropzone">
-            <input type="file" id="local-file-input" accept="image/*,video/*" hidden>
-            <div class="dropzone-inner">
-              <span class="dropzone-icon">📥</span>
-              <p class="dropzone-text">Arrastra una imagen aquí o <strong>haz clic para examinar</strong></p>
-              <span class="dropzone-hint">Formatos soportados: PNG, JPG, WEBP, MP4</span>
-            </div>
-          </div>
+        <div class="factcheck-info-notice">
+          🎨 Se ha generado y adjuntado automáticamente una <strong>infografía explicativa 16:9</strong> al simulador del Tweet.
         </div>
       </div>
 
-      <!-- Botón de Generación de IA -->
-      <button type="button" id="btn-generate-ai" class="btn btn-primary btn-block">
-        <span class="btn-icon">✨</span> Optimizar y Generar Variantes con IA
-      </button>
+      <!-- RECURSOS ADICIONALES (GRAFANA / ARCHIVO) - COLAPSABLE -->
+      <details class="media-details-collapsible">
+        <summary class="collapsible-summary">
+          <span>⚙️ Opciones avanzadas de multimedia (Grafana / Subir archivo manual)</span>
+          <span class="summary-toggle-icon">▾</span>
+        </summary>
+        <div class="media-section-inner">
+          <div class="media-tabs-header">
+            <div class="tabs-nav">
+              <button type="button" id="tab-btn-grafana" class="tab-btn active">📊 Grafana Local</button>
+              <button type="button" id="tab-btn-local" class="tab-btn">📁 Subir Archivo</button>
+            </div>
+          </div>
+
+          <!-- Tab 1: Grafana Directo -->
+          <div id="tab-content-grafana" class="tab-content active">
+            <div class="grafana-grid">
+              <div class="select-field">
+                <label for="grafana-dashboard">Cuadro de Mando</label>
+                <select id="grafana-dashboard" class="custom-select">
+                  <option value="">Cargando dashboards...</option>
+                </select>
+              </div>
+              <div class="select-field">
+                <label for="grafana-panel">Panel a Capturar</label>
+                <select id="grafana-panel" class="custom-select" disabled>
+                  <option value="">Selecciona un dashboard primero</option>
+                </select>
+              </div>
+            </div>
+            <div class="grafana-actions-row">
+              <div class="select-field range-select">
+                <label for="grafana-range">Rango de Tiempo</label>
+                <select id="grafana-range" class="custom-select">
+                  <option value="now-24h">Últimas 24 horas</option>
+                  <option value="now-7d">Últimos 7 días</option>
+                  <option value="now-30d">Últimos 30 días</option>
+                  <option value="now/d">Hoy (Desde las 00:00h)</option>
+                </select>
+              </div>
+              <button type="button" id="btn-render-grafana" class="btn btn-secondary">
+                <span class="btn-icon">🔄</span> Cargar Gráfico de Grafana
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 2: Archivo Local -->
+          <div id="tab-content-local" class="tab-content">
+            <div id="dropzone" class="dropzone">
+              <input type="file" id="local-file-input" accept="image/*,video/*" hidden>
+              <div class="dropzone-inner">
+                <span class="dropzone-icon">📥</span>
+                <p class="dropzone-text">Arrastra una imagen aquí o <strong>haz clic para examinar</strong></p>
+                <span class="dropzone-hint">Formatos soportados: PNG, JPG, WEBP, MP4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
 
       <!-- Variantes Generadas -->
       <div id="variants-container" class="variants-section">
         <h3 class="variants-title">Propuestas Sugeridas:</h3>
         <div id="variants-list" class="variants-grid">
-          <!-- Se inyectan dinámicamente -->
           <div class="variant-empty-state">
-            Escribe tu idea y pulsa <strong>"Optimizar y Generar"</strong> para ver variantes redactadas aquí.
+            Escribe tu idea y pulsa <strong>"Investigar & Fact-Check"</strong> para ver la verificación, noticias e infografía generada.
           </div>
         </div>
       </div>

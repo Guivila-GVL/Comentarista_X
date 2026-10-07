@@ -315,54 +315,90 @@ document.addEventListener("DOMContentLoaded", () => {
     liveEditor.dataset.userEdited = "true";
   });
 
+  const btnFactCheckAi = document.getElementById("btn-factcheck-ai");
+  const factCheckContainer = document.getElementById("factcheck-container");
+  const factCheckVerdictBadge = document.getElementById("factcheck-verdict-badge");
+  const factCheckExplanation = document.getElementById("factcheck-explanation");
+  const factCheckNewsTitle = document.getElementById("factcheck-news-title");
+  const factCheckNewsSource = document.getElementById("factcheck-news-source");
+  const factCheckNewsSummary = document.getElementById("factcheck-news-summary");
+
   // ==========================================
-  // 5. MOTOR IA: GENERAR VARIANTES
+  // 5. INVESTIGAR, FACT-CHECK & GENERAR INFOGRAFÍA
   // ==========================================
-  btnGenerateAi.addEventListener("click", async () => {
-    const text = rawIdea.value.trim() || liveEditor.value.trim();
-    if (!text) {
-      showToast("⚠️ Escribe una idea o apunte primero");
-      return;
-    }
+  if (btnFactCheckAi) {
+    btnFactCheckAi.addEventListener("click", async () => {
+      const text = rawIdea.value.trim() || liveEditor.value.trim();
+      if (!text) {
+        showToast("⚠️ Escribe una idea o apunte primero");
+        return;
+      }
 
-    const selectedTone = document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo";
-    
-    // Indicador del gráfico si está seleccionado
-    let contextInfo = "";
-    if (grafanaPanelSelect.value && grafanaDashboardSelect.value) {
-      const dbText = grafanaDashboardSelect.options[grafanaDashboardSelect.selectedIndex]?.text || "";
-      const panelText = grafanaPanelSelect.options[grafanaPanelSelect.selectedIndex]?.text || "";
-      contextInfo = `Gráfico adjunto de Grafana: ${dbText} - ${panelText}`;
-    }
+      const selectedTone = document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo";
+      const originalBtnText = btnFactCheckAi.innerHTML;
+      btnFactCheckAi.innerHTML = '<span class="btn-icon">⏳</span> Investigando datos y generando infografía...';
+      btnFactCheckAi.disabled = true;
 
-    const originalBtnText = btnGenerateAi.innerHTML;
-    btnGenerateAi.innerHTML = '<span class="btn-icon">⚡</span> Optimizando con IA...';
-    btnGenerateAi.disabled = true;
+      try {
+        const res = await fetch("/api/factcheck-and-generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idea: text,
+            tone: selectedTone
+          })
+        });
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idea: text,
-          tone: selectedTone,
-          context_info: contextInfo
-        })
-      });
+        if (!res.ok) throw new Error("Error en fact-checking");
+        const data = await res.json();
 
-      if (!res.ok) throw new Error("Error en generación");
-      const data = await res.json();
+        // 1. Mostrar Fact-Checking y Explicación
+        if (data.fact_check) {
+          factCheckContainer.style.display = "flex";
+          factCheckVerdictBadge.textContent = data.fact_check.verdict || "Verificación Realizada";
+          factCheckExplanation.textContent = data.fact_check.explanation || "";
 
-      renderVariants(data.variants || []);
-      showToast("✨ ¡Variantes generadas! Haz clic en la que prefieras.");
-    } catch (err) {
-      console.error(err);
-      showToast("❌ Error al generar variantes");
-    } finally {
-      btnGenerateAi.innerHTML = originalBtnText;
-      btnGenerateAi.disabled = false;
-    }
-  });
+          if (data.fact_check.is_accurate) {
+            factCheckVerdictBadge.className = "badge-verdict badge-status-ok";
+          } else {
+            factCheckVerdictBadge.className = "badge-verdict badge-status-warning";
+          }
+        }
+
+        // 2. Mostrar Noticia Relacionada
+        if (data.news && data.news.length > 0) {
+          const mainNews = data.news[0];
+          factCheckNewsTitle.textContent = mainNews.title;
+          factCheckNewsTitle.href = mainNews.url || "#";
+          factCheckNewsSource.textContent = `${mainNews.source} · ${mainNews.date}`;
+          factCheckNewsSummary.textContent = mainNews.summary || "";
+          document.getElementById("factcheck-news-box").style.display = "flex";
+        }
+
+        // 3. Adjuntar Infografía generada al Tweet Card
+        if (data.infographic_url) {
+          setMedia(data.infographic_url);
+        }
+
+        // 4. Renderizar Variantes de Tweets
+        if (data.variants && data.variants.length > 0) {
+          renderVariants(data.variants);
+          // Cargar por defecto la primera variante en el simulador
+          liveEditor.value = data.variants[0].text;
+          liveEditor.dataset.userEdited = "true";
+          updateCharCounter();
+        }
+
+        showToast("✨ ¡Fact-checking completado e infografía generada!");
+      } catch (err) {
+        console.error("Error en factcheck:", err);
+        showToast("❌ Error al verificar o generar infografía");
+      } finally {
+        btnFactCheckAi.innerHTML = originalBtnText;
+        btnFactCheckAi.disabled = false;
+      }
+    });
+  }
 
   function renderVariants(variants) {
     if (!variants || variants.length === 0) {
