@@ -187,7 +187,6 @@ Responde ÚNICAMENTE en JSON con:
 
     # Caso 1: Pedir hacerlo más corto / resumir
     if any(w in fb_lower for w in ["corto", "resumir", "recorta", "sintetiza", "menos", "longitud"]):
-        # Compactar líneas y quitar redundancias
         lines = [line.strip() for line in base_text.split("\n") if line.strip()]
         if len(lines) > 1:
             compacted = f"{lines[0]} {lines[1]}"
@@ -195,48 +194,52 @@ Responde ÚNICAMENTE en JSON con:
                 compacted = compacted[:217] + "..."
             new_text = f"{compacted} ⚡"
         else:
-            new_text = base_text[:180] + "..." if len(base_text) > 180 else base_text
+            new_text = base_text[:190] + "..." if len(base_text) > 190 else base_text
         explanation = "Texto sintetizado para máxima concisión y lectura rápida."
 
-    # Caso 2: Añadir mención o foco en Red Eléctrica / REE
-    elif any(w in fb_lower for w in ["menciona", "etiqueta", "@", "ree", "red electrica", "redelectricaree"]):
-        if "@RedElectricaREE" not in base_text:
-            new_text = base_text.replace("Red Eléctrica", "@RedElectricaREE")
-            if "@RedElectricaREE" not in new_text:
-                new_text = f"{base_text}\n\nVía @RedElectricaREE ⚡"
+    # Caso 2: Añadir mención o etiqueta
+    elif any(w in fb_lower for w in ["menciona", "etiqueta", "@", "citar", "mencion"]):
+        # Extraer handle si hay uno en feedback
+        words = feedback.split()
+        handles = [w for w in words if w.startswith("@")]
+        target_handle = handles[0] if handles else "@RedElectricaREE"
+        if target_handle not in base_text:
+            new_text = f"{base_text}\n\nVía {target_handle} ⚡"
         else:
             new_text = base_text
-        explanation = "Se ha integrado la mención oficial a @RedElectricaREE."
+        explanation = f"Se ha integrado la mención a {target_handle}."
 
-    # Caso 3: Añadir más datos numéricos / megavatios / horas / cifras
-    elif any(w in fb_lower for w in ["dato", "cifra", "mw", "megavatio", "numero", "porcentaje", "coste"]):
-        new_text = (
-            f"📊 Datos clave del SRAD (@RedElectricaREE):\n"
-            f"• Activación en <15 min ante oscilaciones de red.\n"
-            f"• Deslastre de grandes industrias para fijar 50 Hz.\n"
-            f"• Clave en la gestión del P.O. 11.1 peninsular. ⚡"
-        )
-        explanation = "Se ha reestructurado con viñetas numéricas y métricas técnicas."
+    # Caso 3: Añadir más datos numéricos / cifras
+    elif any(w in fb_lower for w in ["dato", "cifra", "numero", "porcentaje", "cifras"]):
+        # Si el usuario especificó una cifra en el feedback
+        import re
+        numbers = re.findall(r'\d+[\.,]?\d*', feedback)
+        if numbers:
+            num_str = numbers[0]
+            new_text = f"📊 Dato clave ({num_str}):\n\n{base_text}"
+        else:
+            new_text = f"📊 Clave con datos de mercado:\n\n{base_text}"
+        explanation = "Reestructurado con énfasis en datos cuantitativos."
 
     # Caso 4: Más impacto / alerta / urgente
     elif any(w in fb_lower for w in ["impacto", "alerta", "urgente", "fuerte", "critico", "duro"]):
-        clean = base_text.replace("💡 Ojo al dato técnico:", "").replace("📊", "").strip()
-        new_text = f"🚨 ALERTA RED ELÉCTRICA:\n\n{clean}"
+        clean = base_text.replace("💡", "").replace("📊", "").strip()
+        new_text = f"🚨 ÚLTIMA HORA | {clean}"
         explanation = "Se ha cambiado el gancho inicial a formato de alerta de impacto."
 
     # Caso 5: Más divulgativo / explicar mejor
     elif any(w in fb_lower for w in ["divulgativo", "explica", "sencillo", "pedagogico", "claro"]):
         new_text = (
-            f"💡 ¿Cómo funciona la protección de la red eléctrica?\n\n"
-            f"Cuando hay caídas imprevistas, @RedElectricaREE activa el SRAD: pide a grandes industrias pausar consumo para evitar apagones.\n\n"
-            f"No es 'RESA': es gestión técnica en <15 min. ⚡"
+            f"💡 ¿Qué significa esto para el ciudadano?\n\n"
+            f"{base_text}\n\n"
+            f"Claves explicadas de forma sencilla. ⚡"
         )
-        explanation = "Redactado en tono pedagógico paso a paso."
+        explanation = "Redactado en tono pedagógico y accesible para el público general."
 
     # Caso general: Aplicar comentario directamente
     else:
         new_text = f"{base_text}\n\n👉 {feedback.strip()}."
-        explanation = f"Se ha incorporado la indicación: \"{feedback[:50]}\"."
+        explanation = f"Se ha incorporado tu indicación: \"{feedback[:50]}\"."
 
     # Asegurar límite de 280 caracteres
     if len(new_text) > 280:

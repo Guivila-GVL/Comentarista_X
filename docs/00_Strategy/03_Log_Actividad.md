@@ -17,3 +17,5 @@ Tabla cronológica de avances, decisiones y cambios realizados en el proyecto.
 | **2026-10-07** | 19:50 | **Pivote Estratégico (Feedback Usuario)**: Enfoque prioritario en Fact-Checking, Búsqueda de Noticias y Generación Automática de Infografías 16:9. | Usuario + IA | 🟢 Aprobado |
 | **2026-10-07** | 19:53 | Implementación de `fact_checker.py` e `infographic_generator.py` (con resolución del caso "RESA" vs "SRAD"). Pruebas superadas. | IA | 🟢 Completado |
 | **2026-10-07** | 20:05 | **Bucle de Refinamiento Iterativo (Feedback Loop)**: Implementación del módulo de comentarios de usuario para modificar el tweet en vivo, historial de versiones (`v1`, `v2`, `v3`) con deshacer/rehacer y píldoras rápidas (`✂️ Más corto`, `📊 Más datos`, `🏷️ @RedElectricaREE`). | Usuario + IA | 🟢 Completado |
+| **2026-10-07** | 20:15 | **Eliminación Total de Memoria Residual & Rediseño de Flujo**: Desacoplamiento total de textos estáticos/RESA; búsqueda 100% en vivo de noticias RSS y datos técnicos; propuesta directa dentro del simulador de X; módulo de gestión y modificación interactiva de infografías 16:9. Pruebas 100% superadas. | Usuario + IA | 🟢 Completado |
+

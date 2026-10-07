@@ -14,7 +14,7 @@
       <div class="logo-badge">🎙️</div>
       <div>
         <h1 class="logo-title">Comentarista</h1>
-        <p class="logo-subtitle">Asistente Editorial & Previsualizador de X</p>
+        <p class="logo-subtitle">Asistente Editorial, Noticias & Infografías para X</p>
       </div>
     </div>
     <div class="header-status">
@@ -24,38 +24,41 @@
       </div>
       <div id="ai-badge" class="status-pill status-ai">
         <span class="status-icon">✨</span>
-        <span class="status-text">IA: Activa</span>
+        <span class="status-text">Motor: Buscador & IA</span>
       </div>
+      <button type="button" id="btn-open-settings" class="btn-settings-pill" title="Configurar API Key y Perfil">
+        ⚙️ Ajustes
+      </button>
     </div>
   </header>
 
   <!-- CONTENEDOR PRINCIPAL: SIDE-BY-SIDE -->
   <main class="main-layout">
     
-    <!-- PANEL IZQUIERDO: COMPOSITOR Y ASISTENCIA -->
+    <!-- PANEL IZQUIERDO: FLUJO EDITORIAL (INVESTIGACIÓN, NOTICIAS E INFOGRAFÍA) -->
     <section class="panel panel-editor">
       <div class="panel-header">
-        <h2 class="section-title">💡 1. Composición y Asistencia</h2>
-        <span class="tag-badge">Editor Inteligente</span>
+        <h2 class="section-title">💡 1. Tu Comentario o Idea</h2>
+        <span class="tag-badge">Paso 1: Entrada</span>
       </div>
 
       <!-- Área de Entrada de la Idea -->
       <div class="form-group">
         <label for="raw-idea" class="input-label">
-          Idea, Datos o Apunte en Bruto
-          <span class="label-hint">Escribe sin preocuparte por el formato o las faltas</span>
+          Comentario, Noticia o Asunto a Publicar
+          <span class="label-hint">Escribe lo que quieras comentar en el tono que prefieras</span>
         </label>
         <textarea 
           id="raw-idea" 
           class="custom-textarea" 
           rows="3" 
-          placeholder="Ej: El sistema de protección RESA se ha activado otra vez. El deterioro de nuestra infraestructura eléctrica no para..."
+          placeholder="Escribe aquí tu apunte (ej: Hoy el pool eléctrico ha marcado cero euros por el viento, o cualquier tema del que quieras hablar)..."
         ></textarea>
       </div>
 
       <!-- Selector de Tono -->
       <div class="form-group">
-        <label class="input-label">Tono Deseado</label>
+        <label class="input-label">Tono Deseado para el Tweet</label>
         <div class="tone-selector">
           <label class="tone-option">
             <input type="radio" name="tone" value="Divulgativo" checked>
@@ -72,38 +75,73 @@
         </div>
       </div>
 
-      <!-- BOTÓN PRINCIPAL: INVESTIGAR, FACT-CHECK & GENERAR INFOGRAFÍA -->
+      <!-- BOTÓN PRINCIPAL: BUSCAR NOTICIAS Y PREPARAR TWEET -->
       <div class="main-cta-wrapper">
-        <button type="button" id="btn-factcheck-ai" class="btn btn-primary btn-cta-glow btn-block">
-          <span class="btn-icon">🔍</span> Investigar, Fact-Check & Generar Infografía
+        <button type="button" id="btn-search-draft" class="btn btn-primary btn-cta-glow btn-block">
+          <span class="btn-icon">🔍</span> Buscar Noticias, Datos & Preparar Tweet
         </button>
       </div>
 
-      <!-- SECCIÓN DE FACT-CHECKING Y NOTICIAS (DINÁMICO) -->
-      <div id="factcheck-container" class="factcheck-card" style="display: none;">
-        <div class="factcheck-header">
-          <span id="factcheck-verdict-badge" class="badge-verdict">⚠️ Verificación</span>
-          <span class="factcheck-tag">Fact-Checking</span>
+      <!-- RESULTADOS DE LA BÚSQUEDA: NOTICIAS Y DATOS ENCONTRADOS -->
+      <div id="research-results-card" class="research-card" style="display: none;">
+        <div class="research-header">
+          <span class="research-badge">📰 Noticias y Datos Localizados</span>
+          <span id="factcheck-verdict-badge" class="badge-verdict">Verificado</span>
         </div>
-        <div id="factcheck-explanation" class="factcheck-text"></div>
+        
+        <p id="research-explanation" class="research-explanation-text"></p>
 
-        <!-- Noticia respaldada -->
-        <div id="factcheck-news-box" class="news-reference-box">
-          <div class="news-header-label">📰 Noticia / Respaldo Documental:</div>
-          <a id="factcheck-news-title" href="#" target="_blank" class="news-link"></a>
-          <div id="factcheck-news-source" class="news-meta"></div>
-          <p id="factcheck-news-summary" class="news-summary"></p>
+        <!-- Lista de noticias reales encontradas -->
+        <div class="news-list-container">
+          <div class="news-list-label">Titulares Relevantes en Tiempo Real:</div>
+          <div id="news-items-list" class="news-items-grid"></div>
         </div>
+      </div>
 
-        <div class="factcheck-info-notice">
-          🎨 Se ha generado y adjuntado automáticamente una <strong>infografía explicativa 16:9</strong> al simulador del Tweet.
+      <!-- GESTIÓN Y EDICIÓN DE LA INFOGRAFÍA ASOCIADA -->
+      <div id="infographic-management-card" class="infographic-card" style="display: none;">
+        <div class="infographic-header">
+          <div class="info-title-group">
+            <span class="info-icon">🎨</span>
+            <h3 class="info-heading">Diseño de la Infografía 16:9</h3>
+          </div>
+          <span class="badge-info-status">Automática</span>
+        </div>
+        <p class="info-card-desc">Decide qué datos van en la infografía y da órdenes directas para modificarla:</p>
+
+        <!-- Puntos actuales de la infografía -->
+        <div id="infographic-cards-summary" class="info-cards-preview-row"></div>
+
+        <!-- Caja de órdenes para modificar la infografía -->
+        <form id="form-update-infographic" class="info-order-form">
+          <label class="input-label-sm">Dar órdenes para modificar la infografía:</label>
+          <div class="info-order-input-row">
+            <input 
+              type="text" 
+              id="infographic-order-input" 
+              class="custom-input info-input-text" 
+              placeholder="Ej: Cambia la tarjeta 2 y pon que fueron 1.800 MW, o pon título X..."
+            >
+            <button type="submit" id="btn-submit-info-order" class="btn btn-secondary btn-sm-action">
+              <span>🔄 Actualizar Gráfico</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="info-actions-row">
+          <button type="button" id="btn-toggle-attach-info" class="btn btn-toggle-attached">
+            <span>📎 Adjunta al Tweet (Activa)</span>
+          </button>
+          <a id="btn-download-infographic" href="#" download="infografia_x.png" class="btn btn-secondary btn-sm-action">
+            <span>📥 Descargar PNG</span>
+          </a>
         </div>
       </div>
 
       <!-- RECURSOS ADICIONALES (GRAFANA / ARCHIVO) - COLAPSABLE -->
       <details class="media-details-collapsible">
         <summary class="collapsible-summary">
-          <span>⚙️ Opciones avanzadas de multimedia (Grafana / Subir archivo manual)</span>
+          <span>⚙️ Opciones adicionales de medios (Grafana Local / Subir archivo)</span>
           <span class="summary-toggle-icon">▾</span>
         </summary>
         <div class="media-section-inner">
@@ -159,22 +197,12 @@
           </div>
         </div>
       </details>
-
-      <!-- Variantes Generadas -->
-      <div id="variants-container" class="variants-section">
-        <h3 class="variants-title">Propuestas Sugeridas:</h3>
-        <div id="variants-list" class="variants-grid">
-          <div class="variant-empty-state">
-            Escribe tu idea y pulsa <strong>"Investigar & Fact-Check"</strong> para ver la verificación, noticias e infografía generada.
-          </div>
-        </div>
-      </div>
     </section>
 
-    <!-- PANEL DERECHO: SIMULADOR DE X EN VIVO -->
+    <!-- PANEL DERECHO: SIMULADOR DE X EN VIVO + REFINAMIENTO ITERATIVO -->
     <section class="panel panel-preview">
       <div class="panel-header">
-        <h2 class="section-title">📱 2. Simulador de X (Feed Real)</h2>
+        <h2 class="section-title">📱 2. Tweet Preparado (Simulador de X)</h2>
         <span class="tag-badge badge-live">En Vivo</span>
       </div>
 
@@ -205,11 +233,11 @@
             <textarea 
               id="live-tweet-editor" 
               class="tweet-inline-editor" 
-              placeholder="¿Qué está pasando? Escribe o edita directamente aquí tu tweet final..."
+              placeholder="El tweet preparado aparecerá aquí tras buscar noticias y datos..."
             ></textarea>
           </div>
 
-          <!-- Medios adjuntos (Imagen de Grafana o Archivo) -->
+          <!-- Medios adjuntos (Infografía o Captura) -->
           <div id="media-preview-box" class="tweet-media-wrapper" style="display: none;">
             <img id="tweet-image-preview" src="" alt="Gráfico adjunto" class="tweet-media-image">
             <button type="button" id="btn-remove-media" class="btn-remove-media" title="Quitar imagen">✕</button>
@@ -217,10 +245,10 @@
 
           <!-- Barra de interacciones simulada de X -->
           <div class="tweet-footer-stats">
-            <div class="stat-item"><span class="icon">💬</span> <span>12</span></div>
-            <div class="stat-item"><span class="icon">🔁</span> <span>45</span></div>
-            <div class="stat-item"><span class="icon">❤️</span> <span>189</span></div>
-            <div class="stat-item"><span class="icon">📊</span> <span>2.4K</span></div>
+            <div class="stat-item"><span class="icon">💬</span> <span>18</span></div>
+            <div class="stat-item"><span class="icon">🔁</span> <span>42</span></div>
+            <div class="stat-item"><span class="icon">❤️</span> <span>215</span></div>
+            <div class="stat-item"><span class="icon">📊</span> <span>3.8K</span></div>
             <div class="stat-item"><span class="icon">🔖</span></div>
             <div class="stat-item"><span class="icon">📤</span></div>
           </div>
@@ -250,7 +278,7 @@
         <div class="feedback-loop-header">
           <div class="feedback-title-group">
             <span class="feedback-icon">💬</span>
-            <span class="feedback-title">Refinar con tus comentarios</span>
+            <span class="feedback-title">3. Modificar con tus comentarios</span>
           </div>
           <div class="version-controls">
             <span id="tweet-version-badge" class="version-badge">v1</span>
@@ -263,11 +291,11 @@
 
         <!-- Píldoras rápidas de 1 clic -->
         <div class="quick-chips-row">
-          <button type="button" class="quick-chip" data-instruction="Hazlo más corto y conciso">✂️ Más corto</button>
-          <button type="button" class="quick-chip" data-instruction="Añade datos numéricos y métricas clave">📊 Más cifras</button>
-          <button type="button" class="quick-chip" data-instruction="Integra la mención oficial @RedElectricaREE">🏷️ @RedElectricaREE</button>
+          <button type="button" class="quick-chip" data-instruction="Hazlo más corto y directo">✂️ Más corto</button>
+          <button type="button" class="quick-chip" data-instruction="Añade datos numéricos y cifras del sector">📊 Más cifras</button>
+          <button type="button" class="quick-chip" data-instruction="Añade la mención oficial @RedElectricaREE">🏷️ @RedElectricaREE</button>
           <button type="button" class="quick-chip" data-instruction="Dale un tono de alerta urgente y rotundo">🚨 Más impacto</button>
-          <button type="button" class="quick-chip" data-instruction="Hazlo más didáctico y sencillo para el público">💡 Más divulgativo</button>
+          <button type="button" class="quick-chip" data-instruction="Hazlo más didáctico y sencillo para el ciudadano">💡 Más divulgativo</button>
         </div>
 
         <!-- Input de comentarios de cambio -->
@@ -276,11 +304,11 @@
             type="text" 
             id="feedback-input" 
             class="feedback-input-text" 
-            placeholder="Ej: Quita adjetivos, enfócalo en los costes de la industria..." 
+            placeholder="Escribe qué quieres cambiar (ej: hazlo más corto, quita emojis, pon el foco en costes...)" 
             autocomplete="off"
           >
           <button type="submit" id="btn-submit-feedback" class="btn btn-primary btn-submit-feedback">
-            <span>⚡ Modificar</span>
+            <span>⚡ Modificar Tweet</span>
           </button>
         </form>
 
@@ -306,6 +334,38 @@
     </section>
 
   </main>
+
+  <!-- MODAL DE AJUSTES Y CONFIGURACIÓN -->
+  <div id="settings-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Ajustes de Comentarista</h3>
+        <button type="button" id="btn-close-settings" class="modal-close-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="cfg-gemini-key" class="input-label">
+            Google Gemini API Key (Opcional)
+            <span class="label-hint">Para análisis con Gemini 2.5 Flash</span>
+          </label>
+          <input type="password" id="cfg-gemini-key" class="custom-input" placeholder="AIzaSy...">
+        </div>
+        <div class="form-group">
+          <label for="cfg-user-name" class="input-label">Nombre para el Simulador</label>
+          <input type="text" id="cfg-user-name" class="custom-input" value="Guillermo Vila">
+        </div>
+        <div class="form-group">
+          <label for="cfg-user-handle" class="input-label">Handle de X (@usuario)</label>
+          <input type="text" id="cfg-user-handle" class="custom-input" value="guivila">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-save-settings" class="btn btn-primary">
+          💾 Guardar Ajustes
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- TOAST DE NOTIFICACIÓN DE COPIA -->
   <div id="toast" class="toast">¡Texto copiado al portapapeles!</div>

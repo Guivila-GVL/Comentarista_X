@@ -1,32 +1,31 @@
 /**
  * PROYECTO COMENTARISTA - CLIENT APPLICATION
- * Lógica interactiva: conexión con Grafana, motor IA, previsualización reactiva de X y portapapeles.
+ * Flujo: 1. Idea -> 2. Búsqueda Noticias/Datos -> 3. Tweet directo en Simulador -> 4. Refinamiento -> 5. Gestión Infografía
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Elementos DOM
+  // Elementos DOM Principales
   const grafanaBadge = document.getElementById("grafana-badge");
   const aiBadge = document.getElementById("ai-badge");
   const rawIdea = document.getElementById("raw-idea");
+  const btnSearchDraft = document.getElementById("btn-search-draft");
+
+  // Resultados de Búsqueda
+  const researchCard = document.getElementById("research-results-card");
+  const verdictBadge = document.getElementById("factcheck-verdict-badge");
+  const researchExplanation = document.getElementById("research-explanation");
+  const newsItemsList = document.getElementById("news-items-list");
+
+  // Gestión de Infografía
+  const infographicCard = document.getElementById("infographic-management-card");
+  const infographicCardsSummary = document.getElementById("infographic-cards-summary");
+  const formUpdateInfographic = document.getElementById("form-update-infographic");
+  const infographicOrderInput = document.getElementById("infographic-order-input");
+  const btnToggleAttachInfo = document.getElementById("btn-toggle-attach-info");
+  const btnDownloadInfographic = document.getElementById("btn-download-infographic");
+
+  // Simulador de X
   const liveEditor = document.getElementById("live-tweet-editor");
-  const btnGenerateAi = document.getElementById("btn-generate-ai");
-  const variantsList = document.getElementById("variants-list");
-
-  // Grafana
-  const grafanaDashboardSelect = document.getElementById("grafana-dashboard");
-  const grafanaPanelSelect = document.getElementById("grafana-panel");
-  const grafanaRangeSelect = document.getElementById("grafana-range");
-  const btnRenderGrafana = document.getElementById("btn-render-grafana");
-
-  // Pestañas Multimedia
-  const tabBtnGrafana = document.getElementById("tab-btn-grafana");
-  const tabBtnLocal = document.getElementById("tab-btn-local");
-  const tabContentGrafana = document.getElementById("tab-content-grafana");
-  const tabContentLocal = document.getElementById("tab-content-local");
-  const dropzone = document.getElementById("dropzone");
-  const localFileInput = document.getElementById("local-file-input");
-
-  // Medios en el Tweet
   const mediaPreviewBox = document.getElementById("media-preview-box");
   const tweetImagePreview = document.getElementById("tweet-image-preview");
   const btnRemoveMedia = document.getElementById("btn-remove-media");
@@ -36,28 +35,63 @@ document.addEventListener("DOMContentLoaded", () => {
   const charStatusBadge = document.getElementById("char-status-badge");
   const progressCircle = document.getElementById("progress-ring-circle");
 
+  // Refinamiento Iterativo
+  const tweetVersionBadge = document.getElementById("tweet-version-badge");
+  const btnUndoVersion = document.getElementById("btn-undo-version");
+  const btnRedoVersion = document.getElementById("btn-redo-version");
+  const formRefine = document.getElementById("form-refine");
+  const feedbackInput = document.getElementById("feedback-input");
+  const feedbackLog = document.getElementById("feedback-log");
+  const feedbackLogText = document.getElementById("feedback-log-text");
+  const quickChips = document.querySelectorAll(".quick-chip");
+
   // Acciones en 1 clic
   const btnCopyText = document.getElementById("btn-copy-text");
   const btnCopyImage = document.getElementById("btn-copy-image");
   const btnOpenX = document.getElementById("btn-open-x");
   const toast = document.getElementById("toast");
 
-  // Circunferencia del anillo SVG (radio = 16px)
+  // Modal Ajustes
+  const btnOpenSettings = document.getElementById("btn-open-settings");
+  const settingsModal = document.getElementById("settings-modal");
+  const btnCloseSettings = document.getElementById("btn-close-settings");
+  const btnSaveSettings = document.getElementById("btn-save-settings");
+  const cfgGeminiKey = document.getElementById("cfg-gemini-key");
+  const cfgUserName = document.getElementById("cfg-user-name");
+  const cfgUserHandle = document.getElementById("cfg-user-handle");
+
+  // Grafana (Opciones secundarias)
+  const grafanaDashboardSelect = document.getElementById("grafana-dashboard");
+  const grafanaPanelSelect = document.getElementById("grafana-panel");
+  const grafanaRangeSelect = document.getElementById("grafana-range");
+  const btnRenderGrafana = document.getElementById("btn-render-grafana");
+  const tabBtnGrafana = document.getElementById("tab-btn-grafana");
+  const tabBtnLocal = document.getElementById("tab-btn-local");
+  const tabContentGrafana = document.getElementById("tab-content-grafana");
+  const tabContentLocal = document.getElementById("tab-content-local");
+  const dropzone = document.getElementById("dropzone");
+  const localFileInput = document.getElementById("local-file-input");
+
+  // Estado en memoria
+  let currentMediaUrl = null;
+  let isInfographicAttached = true;
+  let currentInfographicData = { title: "", subtitle: "", cards: [] };
+  const tweetHistory = [];
+  let historyIndex = -1;
+
+  // Circunferencia anillo SVG
   const CIRCUMFERENCE = 2 * Math.PI * 16;
   progressCircle.style.strokeDasharray = `${CIRCUMFERENCE}`;
   progressCircle.style.strokeDashoffset = `${CIRCUMFERENCE}`;
 
-  let currentMediaUrl = null;
-
   // ==========================================
-  // 1. INICIALIZACIÓN Y ESTADO DEL SISTEMA
+  // 1. INICIALIZACIÓN
   // ==========================================
   async function initSystem() {
     try {
       const res = await fetch("/api/status");
       const data = await res.json();
 
-      // Estado de Grafana
       if (data.grafana && data.grafana.status === "ok") {
         grafanaBadge.className = "status-pill status-online";
         grafanaBadge.querySelector(".status-text").textContent = `Grafana: Online (v${data.grafana.version})`;
@@ -66,223 +100,330 @@ document.addEventListener("DOMContentLoaded", () => {
         grafanaBadge.querySelector(".status-text").textContent = "Grafana: Offline";
       }
 
-      // Estado de IA
-      if (data.ai_engine && data.ai_engine.provider) {
-        aiBadge.querySelector(".status-text").textContent = `IA: ${data.ai_engine.provider}`;
+      if (data.ai_engine) {
+        aiBadge.querySelector(".status-text").textContent = `Motor: ${data.ai_engine.provider}`;
       }
 
-      // Perfil de usuario
       if (data.user_profile) {
         document.getElementById("preview-display-name").textContent = data.user_profile.name;
         document.getElementById("preview-handle").textContent = `@${data.user_profile.handle}`;
         const initials = data.user_profile.name.split(" ").map(n => n[0]).join("").toUpperCase();
         document.getElementById("avatar-preview").textContent = initials || "GV";
+        if (cfgUserName) cfgUserName.value = data.user_profile.name;
+        if (cfgUserHandle) cfgUserHandle.value = data.user_profile.handle;
       }
 
-      // Cargar lista de Dashboards
-      await loadDashboards();
+      loadDashboards();
     } catch (err) {
-      console.error("Error al obtener estado:", err);
-      grafanaBadge.className = "status-pill status-offline";
-      grafanaBadge.querySelector(".status-text").textContent = "Servidor Offline";
+      console.error("Error al iniciar:", err);
     }
   }
 
   // ==========================================
-  // 2. GESTIÓN DE GRAFANA
+  // 2. PASO 1 Y 2: BUSCAR NOTICIAS Y PREPARAR TWEET DIRECTO
   // ==========================================
-  async function loadDashboards() {
-    try {
-      const res = await fetch("/api/grafana/dashboards");
-      const data = await res.json();
-
-      grafanaDashboardSelect.innerHTML = '<option value="">-- Elige un Cuadro de Mando --</option>';
-      if (data.dashboards && data.dashboards.length > 0) {
-        data.dashboards.forEach(d => {
-          const opt = document.createElement("option");
-          opt.value = d.uid;
-          opt.textContent = `${d.title} (${d.folderTitle || 'General'})`;
-          grafanaDashboardSelect.appendChild(opt);
-        });
-      } else {
-        grafanaDashboardSelect.innerHTML = '<option value="">Sin dashboards disponibles</option>';
-      }
-    } catch (err) {
-      console.error("Error al cargar dashboards:", err);
-      grafanaDashboardSelect.innerHTML = '<option value="">Error de conexión</option>';
-    }
-  }
-
-  grafanaDashboardSelect.addEventListener("change", async (e) => {
-    const uid = e.target.value;
-    if (!uid) {
-      grafanaPanelSelect.innerHTML = '<option value="">Selecciona un dashboard primero</option>';
-      grafanaPanelSelect.disabled = true;
+  btnSearchDraft.addEventListener("click", async () => {
+    const text = rawIdea.value.trim();
+    if (!text) {
+      showToast("⚠️ Escribe tu idea o comentario primero");
       return;
     }
 
-    grafanaPanelSelect.innerHTML = '<option value="">Cargando paneles...</option>';
-    grafanaPanelSelect.disabled = true;
+    const selectedTone = document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo";
+    const originalBtn = btnSearchDraft.innerHTML;
+    btnSearchDraft.innerHTML = '<span class="btn-icon">⏳</span> Buscando noticias y preparando tweet...';
+    btnSearchDraft.disabled = true;
 
     try {
-      const res = await fetch(`/api/grafana/panels?uid=${encodeURIComponent(uid)}`);
+      const res = await fetch("/api/search-and-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idea: text, tone: selectedTone })
+      });
+
+      if (!res.ok) throw new Error("Error procesando solicitud");
       const data = await res.json();
 
-      grafanaPanelSelect.innerHTML = '<option value="">-- Elige un Panel --</option>';
-      if (data.panels && data.panels.length > 0) {
-        data.panels.forEach(p => {
-          const opt = document.createElement("option");
-          opt.value = p.id;
-          opt.textContent = `[ID ${p.id}] ${p.title}`;
-          grafanaPanelSelect.appendChild(opt);
-        });
-        grafanaPanelSelect.disabled = false;
-      } else {
-        grafanaPanelSelect.innerHTML = '<option value="">Sin paneles encontrados</option>';
+      // 1. Mostrar Noticias y Verificación
+      researchCard.style.display = "flex";
+      verdictBadge.textContent = data.fact_check?.verdict || "Datos contrastados";
+      researchExplanation.textContent = data.fact_check?.explanation || "";
+
+      renderNewsList(data.news || []);
+
+      // 2. Colocar el Tweet preparado DIRECTAMENTE en el simulador
+      if (data.tweet_text) {
+        liveEditor.value = data.tweet_text;
+        liveEditor.dataset.userEdited = "true";
+        pushVersion(data.tweet_text, "Borrador contrastado inicial");
+        updateCharCounter();
       }
+
+      // 3. Preparar la Infografía
+      if (data.infographic_data) {
+        currentInfographicData = data.infographic_data;
+        renderInfographicSummary(data.infographic_data);
+        infographicCard.style.display = "flex";
+      }
+
+      if (data.infographic_url) {
+        currentMediaUrl = data.infographic_url;
+        setMedia(data.infographic_url);
+        isInfographicAttached = true;
+        updateAttachButtonState();
+        if (btnDownloadInfographic) btnDownloadInfographic.href = data.infographic_url;
+      }
+
+      showToast("✨ ¡Noticias encontradas y tweet preparado en el simulador!");
     } catch (err) {
-      console.error("Error al cargar paneles:", err);
-      grafanaPanelSelect.innerHTML = '<option value="">Error al cargar paneles</option>';
+      console.error(err);
+      showToast("❌ Error al buscar noticias o preparar el tweet");
+    } finally {
+      btnSearchDraft.innerHTML = originalBtn;
+      btnSearchDraft.disabled = false;
     }
   });
 
-  btnRenderGrafana.addEventListener("click", async () => {
-    const dashboardUid = grafanaDashboardSelect.value;
-    const panelId = grafanaPanelSelect.value;
-    const timeRange = grafanaRangeSelect.value;
-
-    if (!dashboardUid || !panelId) {
-      showToast("⚠️ Selecciona un dashboard y un panel de Grafana");
+  function renderNewsList(news) {
+    newsItemsList.innerHTML = "";
+    if (!news || news.length === 0) {
+      newsItemsList.innerHTML = '<div class="news-item-card"><span class="news-item-meta">Sin noticias inmediatas para este término.</span></div>';
       return;
     }
 
-    const originalBtnText = btnRenderGrafana.innerHTML;
-    btnRenderGrafana.innerHTML = '<span class="btn-icon">⏳</span> Renderizando...';
-    btnRenderGrafana.disabled = true;
+    news.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "news-item-card";
+      card.innerHTML = `
+        <a href="${item.url || '#'}" target="_blank" class="news-item-title">${escapeHtml(item.title)}</a>
+        <div class="news-item-meta">${escapeHtml(item.source)} · ${escapeHtml(item.date)}</div>
+      `;
+      newsItemsList.appendChild(card);
+    });
+  }
+
+  function renderInfographicSummary(infoData) {
+    infographicCardsSummary.innerHTML = "";
+    const cards = infoData.cards || [];
+    cards.forEach((c, idx) => {
+      const mini = document.createElement("div");
+      mini.className = "info-card-mini";
+      mini.innerHTML = `
+        <span class="info-card-mini-tag" style="color: ${c.color || '#1d9bf0'}">${escapeHtml(c.tag || `T${idx+1}`)}</span>
+        <strong class="info-card-mini-val">${escapeHtml(c.val || '')}</strong>
+        <p class="info-card-mini-desc">${escapeHtml(c.desc || '')}</p>
+      `;
+      infographicCardsSummary.appendChild(mini);
+    });
+  }
+
+  // ==========================================
+  // 3. PASO 4: GESTIONAR Y MODIFICAR LA INFOGRAFÍA
+  // ==========================================
+  formUpdateInfographic.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const orderText = infographicOrderInput.value.trim();
+    if (!orderText) {
+      showToast("⚠️ Escribe qué orden o cambio deseas en la infografía");
+      return;
+    }
+
+    const btnSubmit = document.getElementById("btn-submit-info-order");
+    const originalBtn = btnSubmit.innerHTML;
+    btnSubmit.innerHTML = '<span>⏳ Actualizando...</span>';
+    btnSubmit.disabled = true;
 
     try {
-      const res = await fetch("/api/grafana/render", {
+      const res = await fetch("/api/update-infographic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          dashboard_uid: dashboardUid,
-          panel_id: parseInt(panelId, 10),
-          from_time: timeRange,
-          to_time: "now",
-          width: 1200,
-          height: 675
+          title: currentInfographicData.title,
+          subtitle: currentInfographicData.subtitle,
+          cards: currentInfographicData.cards,
+          instruction: orderText
         })
       });
 
-      if (!res.ok) throw new Error("Error en renderizado");
+      if (!res.ok) throw new Error("Error actualizando infografía");
       const data = await res.json();
 
-      if (data.image_url) {
-        setMedia(data.image_url);
-        showToast("✅ ¡Gráfico de Grafana cargado con éxito!");
-      }
-    } catch (err) {
-      console.error("Error al renderizar panel:", err);
-      showToast("❌ Error al renderizar el gráfico desde Grafana");
-    } finally {
-      btnRenderGrafana.innerHTML = originalBtnText;
-      btnRenderGrafana.disabled = false;
-    }
-  });
-
-  // ==========================================
-  // 3. PESTAÑAS MULTIMEDIA Y ARCHIVOS LOCALES
-  // ==========================================
-  tabBtnGrafana.addEventListener("click", () => {
-    tabBtnGrafana.classList.add("active");
-    tabBtnLocal.classList.remove("active");
-    tabContentGrafana.classList.add("active");
-    tabContentLocal.classList.remove("active");
-  });
-
-  tabBtnLocal.addEventListener("click", () => {
-    tabBtnLocal.classList.add("active");
-    tabBtnGrafana.classList.remove("active");
-    tabContentLocal.classList.add("active");
-    tabContentGrafana.classList.remove("active");
-  });
-
-  dropzone.addEventListener("click", () => localFileInput.click());
-
-  dropzone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropzone.classList.add("drag-over");
-  });
-
-  dropzone.addEventListener("dragleave", () => {
-    dropzone.classList.remove("drag-over");
-  });
-
-  dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("drag-over");
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      uploadFile(e.dataTransfer.files[0]);
-    }
-  });
-
-  localFileInput.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files[0]) {
-      uploadFile(e.target.files[0]);
-    }
-  });
-
-  async function uploadFile(file) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      showToast("⏳ Subiendo archivo...");
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData
-      });
-      if (!res.ok) throw new Error("Error en la subida");
-      const data = await res.json();
-      if (data.image_url) {
-        setMedia(data.image_url);
-        showToast("✅ Archivo adjuntado al tweet");
+      if (data.infographic_url) {
+        currentMediaUrl = data.infographic_url;
+        if (isInfographicAttached) {
+          setMedia(data.infographic_url);
+        }
+        if (btnDownloadInfographic) btnDownloadInfographic.href = data.infographic_url;
+        if (data.infographic_data) {
+          currentInfographicData = data.infographic_data;
+          renderInfographicSummary(data.infographic_data);
+        }
+        infographicOrderInput.value = "";
+        showToast("🎨 ¡Infografía actualizada con tus órdenes!");
       }
     } catch (err) {
       console.error(err);
-      showToast("❌ Error al subir el archivo");
+      showToast("❌ Error al modificar la infografía");
+    } finally {
+      btnSubmit.innerHTML = originalBtn;
+      btnSubmit.disabled = false;
+    }
+  });
+
+  btnToggleAttachInfo.addEventListener("click", () => {
+    isInfographicAttached = !isInfographicAttached;
+    updateAttachButtonState();
+    if (isInfographicAttached && currentMediaUrl) {
+      setMedia(currentMediaUrl);
+      showToast("📎 Infografía adjuntada al tweet");
+    } else {
+      mediaPreviewBox.style.display = "none";
+      btnCopyImage.disabled = true;
+      showToast("Infografía desvinculada del tweet");
+    }
+  });
+
+  function updateAttachButtonState() {
+    if (isInfographicAttached) {
+      btnToggleAttachInfo.className = "btn btn-toggle-attached";
+      btnToggleAttachInfo.innerHTML = "<span>📎 Adjunta al Tweet (Activa)</span>";
+    } else {
+      btnToggleAttachInfo.className = "btn btn-toggle-attached detached";
+      btnToggleAttachInfo.innerHTML = "<span>➕ Adjuntar Infografía al Tweet</span>";
     }
   }
 
-  function setMedia(url) {
-    currentMediaUrl = url;
-    tweetImagePreview.src = url;
-    mediaPreviewBox.style.display = "block";
-    btnCopyImage.disabled = false;
+  // ==========================================
+  // 4. PASO 3: REFINAR TWEET CON COMENTARIOS
+  // ==========================================
+  function pushVersion(text, explanation = "") {
+    if (historyIndex >= 0 && tweetHistory[historyIndex]?.text === text) return;
+    if (historyIndex < tweetHistory.length - 1) {
+      tweetHistory.splice(historyIndex + 1);
+    }
+    tweetHistory.push({ text, explanation });
+    historyIndex = tweetHistory.length - 1;
+    updateVersionControls();
   }
 
-  btnRemoveMedia.addEventListener("click", () => {
-    currentMediaUrl = null;
-    tweetImagePreview.src = "";
-    mediaPreviewBox.style.display = "none";
-    btnCopyImage.disabled = true;
-    showToast("Imagen eliminada del tweet");
+  function updateVersionControls() {
+    if (tweetVersionBadge) tweetVersionBadge.textContent = `v${historyIndex + 1}`;
+    if (btnUndoVersion) btnUndoVersion.disabled = historyIndex <= 0;
+    if (btnRedoVersion) btnRedoVersion.disabled = historyIndex >= tweetHistory.length - 1;
+  }
+
+  btnUndoVersion.addEventListener("click", () => {
+    if (historyIndex > 0) {
+      historyIndex--;
+      const v = tweetHistory[historyIndex];
+      liveEditor.value = v.text;
+      updateCharCounter();
+      updateVersionControls();
+      if (feedbackLog && feedbackLogText) {
+        feedbackLog.style.display = "flex";
+        feedbackLogText.textContent = `Vuelto a v${historyIndex + 1}: ${v.explanation}`;
+      }
+      showToast(`↩️ Vuelto a versión v${historyIndex + 1}`);
+    }
+  });
+
+  btnRedoVersion.addEventListener("click", () => {
+    if (historyIndex < tweetHistory.length - 1) {
+      historyIndex++;
+      const v = tweetHistory[historyIndex];
+      liveEditor.value = v.text;
+      updateCharCounter();
+      updateVersionControls();
+      if (feedbackLog && feedbackLogText) {
+        feedbackLog.style.display = "flex";
+        feedbackLogText.textContent = `Avanzado a v${historyIndex + 1}: ${v.explanation}`;
+      }
+      showToast(`↪️ Avanzado a versión v${historyIndex + 1}`);
+    }
+  });
+
+  async function executeRefinement(instruction) {
+    const currentText = liveEditor.value.trim();
+    if (!currentText) {
+      showToast("⚠️ El tweet en el simulador está vacío");
+      return;
+    }
+    if (!instruction) {
+      showToast("⚠️ Escribe tu comentario o instrucción de cambio");
+      return;
+    }
+
+    const btnSubmit = document.querySelector("#form-refine button[type='submit']");
+    const originalBtn = btnSubmit ? btnSubmit.innerHTML : "";
+    if (btnSubmit) {
+      btnSubmit.innerHTML = '<span>⏳ Aplicando...</span>';
+      btnSubmit.disabled = true;
+    }
+
+    try {
+      const res = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          current_text: currentText,
+          feedback: instruction,
+          fact_context: researchExplanation ? researchExplanation.textContent : "",
+          tone: document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo"
+        })
+      });
+
+      if (!res.ok) throw new Error("Error modificando tweet");
+      const data = await res.json();
+
+      if (data.updated_text) {
+        liveEditor.value = data.updated_text;
+        liveEditor.dataset.userEdited = "true";
+        pushVersion(data.updated_text, data.explanation || instruction);
+        updateCharCounter();
+
+        if (feedbackLog && feedbackLogText) {
+          feedbackLog.style.display = "flex";
+          feedbackLogText.textContent = data.explanation || "Cambio aplicado.";
+        }
+        if (feedbackInput) feedbackInput.value = "";
+        showToast("⚡ ¡Tweet modificado con tu comentario!");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Error al aplicar el cambio al tweet");
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.innerHTML = originalBtn;
+        btnSubmit.disabled = false;
+      }
+    }
+  }
+
+  formRefine.addEventListener("submit", (e) => {
+    e.preventDefault();
+    executeRefinement(feedbackInput.value.trim());
+  });
+
+  quickChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      const inst = chip.dataset.instruction;
+      if (feedbackInput) feedbackInput.value = inst;
+      executeRefinement(inst);
+    });
   });
 
   // ==========================================
-  // 4. EDITOR EN VIVO Y CONTADOR DE CARACTERES
+  // 5. EDITOR Y CONTADOR EN VIVO
   // ==========================================
   function updateCharCounter() {
     const text = liveEditor.value;
     const count = text.length;
     charCurrent.textContent = count;
 
-    // Actualizar anillo de progreso (máximo 280)
     const ratio = Math.min(count / 280, 1);
     const offset = CIRCUMFERENCE - (ratio * CIRCUMFERENCE);
     progressCircle.style.strokeDashoffset = `${offset}`;
 
-    // Estado y colores
     if (count <= 240) {
       progressCircle.style.stroke = "#1d9bf0";
       charStatusBadge.className = "badge-status-ok";
@@ -301,289 +442,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  liveEditor.addEventListener("input", updateCharCounter);
-
-  // Sincronizar idea inicial si el editor de tweet está vacío
-  rawIdea.addEventListener("input", () => {
-    if (!liveEditor.dataset.userEdited) {
-      liveEditor.value = rawIdea.value;
-      updateCharCounter();
-    }
+  liveEditor.addEventListener("input", () => {
+    updateCharCounter();
   });
 
-  liveEditor.addEventListener("keydown", () => {
-    liveEditor.dataset.userEdited = "true";
+  function setMedia(url) {
+    currentMediaUrl = url;
+    tweetImagePreview.src = url;
+    mediaPreviewBox.style.display = "block";
+    btnCopyImage.disabled = false;
+  }
+
+  btnRemoveMedia.addEventListener("click", () => {
+    currentMediaUrl = null;
+    tweetImagePreview.src = "";
+    mediaPreviewBox.style.display = "none";
+    btnCopyImage.disabled = true;
+    isInfographicAttached = false;
+    updateAttachButtonState();
+    showToast("Imagen quitada del tweet");
   });
 
-  const btnFactCheckAi = document.getElementById("btn-factcheck-ai");
-  const factCheckContainer = document.getElementById("factcheck-container");
-  const factCheckVerdictBadge = document.getElementById("factcheck-verdict-badge");
-  const factCheckExplanation = document.getElementById("factcheck-explanation");
-  const factCheckNewsTitle = document.getElementById("factcheck-news-title");
-  const factCheckNewsSource = document.getElementById("factcheck-news-source");
-  const factCheckNewsSummary = document.getElementById("factcheck-news-summary");
-
   // ==========================================
-  // 5. INVESTIGAR, FACT-CHECK & GENERAR INFOGRAFÍA
-  // ==========================================
-  if (btnFactCheckAi) {
-    btnFactCheckAi.addEventListener("click", async () => {
-      const text = rawIdea.value.trim() || liveEditor.value.trim();
-      if (!text) {
-        showToast("⚠️ Escribe una idea o apunte primero");
-        return;
-      }
-
-      const selectedTone = document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo";
-      const originalBtnText = btnFactCheckAi.innerHTML;
-      btnFactCheckAi.innerHTML = '<span class="btn-icon">⏳</span> Investigando datos y generando infografía...';
-      btnFactCheckAi.disabled = true;
-
-      try {
-        const res = await fetch("/api/factcheck-and-generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idea: text,
-            tone: selectedTone
-          })
-        });
-
-        if (!res.ok) throw new Error("Error en fact-checking");
-        const data = await res.json();
-
-        // 1. Mostrar Fact-Checking y Explicación
-        if (data.fact_check) {
-          factCheckContainer.style.display = "flex";
-          factCheckVerdictBadge.textContent = data.fact_check.verdict || "Verificación Realizada";
-          factCheckExplanation.textContent = data.fact_check.explanation || "";
-
-          if (data.fact_check.is_accurate) {
-            factCheckVerdictBadge.className = "badge-verdict badge-status-ok";
-          } else {
-            factCheckVerdictBadge.className = "badge-verdict badge-status-warning";
-          }
-        }
-
-        // 2. Mostrar Noticia Relacionada
-        if (data.news && data.news.length > 0) {
-          const mainNews = data.news[0];
-          factCheckNewsTitle.textContent = mainNews.title;
-          factCheckNewsTitle.href = mainNews.url || "#";
-          factCheckNewsSource.textContent = `${mainNews.source} · ${mainNews.date}`;
-          factCheckNewsSummary.textContent = mainNews.summary || "";
-          document.getElementById("factcheck-news-box").style.display = "flex";
-        }
-
-        // 3. Adjuntar Infografía generada al Tweet Card
-        if (data.infographic_url) {
-          setMedia(data.infographic_url);
-        }
-
-        // 4. Renderizar Variantes de Tweets
-        if (data.variants && data.variants.length > 0) {
-          renderVariants(data.variants);
-          // Cargar por defecto la primera variante en el simulador
-          liveEditor.value = data.variants[0].text;
-          liveEditor.dataset.userEdited = "true";
-          pushVersion(data.variants[0].text, "Borrador inicial generado");
-          updateCharCounter();
-        }
-
-        showToast("✨ ¡Fact-checking completado e infografía generada!");
-      } catch (err) {
-        console.error("Error en factcheck:", err);
-        showToast("❌ Error al verificar o generar infografía");
-      } finally {
-        btnFactCheckAi.innerHTML = originalBtnText;
-        btnFactCheckAi.disabled = false;
-      }
-    });
-  }
-
-  // ==========================================
-  // 5.1. BUCLE DE REFINAMIENTO INTERACTIVO (FEEDBACK)
-  // ==========================================
-  const tweetHistory = [];
-  let historyIndex = -1;
-
-  const tweetVersionBadge = document.getElementById("tweet-version-badge");
-  const btnUndoVersion = document.getElementById("btn-undo-version");
-  const btnRedoVersion = document.getElementById("btn-redo-version");
-  const formRefine = document.getElementById("form-refine");
-  const feedbackInput = document.getElementById("feedback-input");
-  const feedbackLog = document.getElementById("feedback-log");
-  const feedbackLogText = document.getElementById("feedback-log-text");
-  const quickChips = document.querySelectorAll(".quick-chip");
-
-  function pushVersion(text, explanation = "") {
-    if (historyIndex >= 0 && tweetHistory[historyIndex]?.text === text) return;
-    
-    // Si estamos navegando en el historial y se aplica un nuevo cambio, truncamos el futuro
-    if (historyIndex < tweetHistory.length - 1) {
-      tweetHistory.splice(historyIndex + 1);
-    }
-    tweetHistory.push({ text, explanation });
-    historyIndex = tweetHistory.length - 1;
-    updateVersionControls();
-  }
-
-  function updateVersionControls() {
-    if (tweetVersionBadge) {
-      tweetVersionBadge.textContent = `v${historyIndex + 1}`;
-    }
-    if (btnUndoVersion) {
-      btnUndoVersion.disabled = historyIndex <= 0;
-    }
-    if (btnRedoVersion) {
-      btnRedoVersion.disabled = historyIndex >= tweetHistory.length - 1;
-    }
-  }
-
-  if (btnUndoVersion) {
-    btnUndoVersion.addEventListener("click", () => {
-      if (historyIndex > 0) {
-        historyIndex--;
-        const v = tweetHistory[historyIndex];
-        liveEditor.value = v.text;
-        updateCharCounter();
-        updateVersionControls();
-        if (v.explanation && feedbackLog && feedbackLogText) {
-          feedbackLog.style.display = "flex";
-          feedbackLogText.textContent = `Vuelto a v${historyIndex + 1}: ${v.explanation}`;
-        }
-        showToast(`↩️ Vuelto a la versión v${historyIndex + 1}`);
-      }
-    });
-  }
-
-  if (btnRedoVersion) {
-    btnRedoVersion.addEventListener("click", () => {
-      if (historyIndex < tweetHistory.length - 1) {
-        historyIndex++;
-        const v = tweetHistory[historyIndex];
-        liveEditor.value = v.text;
-        updateCharCounter();
-        updateVersionControls();
-        if (v.explanation && feedbackLog && feedbackLogText) {
-          feedbackLog.style.display = "flex";
-          feedbackLogText.textContent = `Avanzado a v${historyIndex + 1}: ${v.explanation}`;
-        }
-        showToast(`↪️ Avanzado a la versión v${historyIndex + 1}`);
-      }
-    });
-  }
-
-  async function executeRefinement(instruction) {
-    const currentText = liveEditor.value.trim();
-    if (!currentText) {
-      showToast("⚠️ El tweet actual está vacío");
-      return;
-    }
-    if (!instruction) {
-      showToast("⚠️ Escribe qué cambio deseas hacer");
-      return;
-    }
-
-    const btnSubmit = document.getElementById("btn-submit-feedback");
-    const originalBtnText = btnSubmit ? btnSubmit.innerHTML : "";
-    if (btnSubmit) {
-      btnSubmit.innerHTML = '<span>⏳ Aplicando...</span>';
-      btnSubmit.disabled = true;
-    }
-
-    try {
-      const res = await fetch("/api/refine", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          current_text: currentText,
-          feedback: instruction,
-          fact_context: factCheckExplanation ? factCheckExplanation.textContent : "",
-          tone: document.querySelector('input[name="tone"]:checked')?.value || "Divulgativo"
-        })
-      });
-
-      if (!res.ok) throw new Error("Error en refinamiento");
-      const data = await res.json();
-
-      if (data.updated_text) {
-        liveEditor.value = data.updated_text;
-        liveEditor.dataset.userEdited = "true";
-        pushVersion(data.updated_text, data.explanation || instruction);
-        updateCharCounter();
-
-        if (feedbackLog && feedbackLogText) {
-          feedbackLog.style.display = "flex";
-          feedbackLogText.textContent = data.explanation || "Modificación aplicada correctamente.";
-        }
-        if (feedbackInput) feedbackInput.value = "";
-        showToast("⚡ ¡Tweet modificado según tu comentario!");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("❌ Error al aplicar el cambio");
-    } finally {
-      if (btnSubmit) {
-        btnSubmit.innerHTML = originalBtnText;
-        btnSubmit.disabled = false;
-      }
-    }
-  }
-
-  if (formRefine) {
-    formRefine.addEventListener("submit", (e) => {
-      e.preventDefault();
-      executeRefinement(feedbackInput.value.trim());
-    });
-  }
-
-  quickChips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      const inst = chip.dataset.instruction;
-      if (feedbackInput) feedbackInput.value = inst;
-      executeRefinement(inst);
-    });
-  });
-
-  function renderVariants(variants) {
-    if (!variants || variants.length === 0) {
-      variantsList.innerHTML = '<div class="variant-empty-state">No se pudieron generar propuestas.</div>';
-      return;
-    }
-
-    variantsList.innerHTML = "";
-    variants.forEach((v) => {
-      const card = document.createElement("div");
-      card.className = "variant-card";
-      card.innerHTML = `
-        <div class="variant-card-header">
-          <span class="variant-tone-badge">${v.tone || 'Propuesta'}</span>
-          <span class="variant-char-count">${v.char_count || v.text.length} / 280 caract.</span>
-        </div>
-        <div class="variant-text">${escapeHtml(v.text)}</div>
-      `;
-
-      card.addEventListener("click", () => {
-        liveEditor.value = v.text;
-        liveEditor.dataset.userEdited = "true";
-        pushVersion(v.text, `Seleccionada variante: ${v.tone}`);
-        updateCharCounter();
-        showToast(`Variante "${v.tone}" cargada en el simulador`);
-      });
-
-      variantsList.appendChild(card);
-    });
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // ==========================================
-  // 6. ACCIONES RÁPIDAS (ONE-CLICK)
+  // 6. ACCIONES ONE-CLICK
   // ==========================================
   btnCopyText.addEventListener("click", async () => {
     const text = liveEditor.value;
@@ -591,13 +472,12 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("⚠️ El tweet está vacío");
       return;
     }
-
     try {
       await navigator.clipboard.writeText(text);
-      showToast("📋 ¡Texto del tweet copiado al portapapeles!");
+      showToast("📋 ¡Texto del tweet copiado!");
     } catch (err) {
-      console.error("Error al copiar texto:", err);
-      showToast("❌ No se pudo acceder al portapapeles");
+      console.error(err);
+      showToast("❌ Error al copiar texto");
     }
   });
 
@@ -606,55 +486,180 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("⚠️ No hay imagen adjunta");
       return;
     }
-
     try {
       const response = await fetch(currentMediaUrl);
       const blob = await response.blob();
-
-      // Intentar copiar al portapapeles como ClipboardItem (formato PNG)
       if (navigator.clipboard && navigator.clipboard.write) {
         try {
           const item = new ClipboardItem({ [blob.type]: blob });
           await navigator.clipboard.write([item]);
-          showToast("🖼️ ¡Imagen copiada al portapapeles! Lista para pegar (Ctrl+V)");
+          showToast("🖼️ ¡Imagen copiada! Pégala con Ctrl+V en X");
           return;
         } catch (clipErr) {
-          console.warn("Fallo en navigator.clipboard.write, recurriendo a descarga:", clipErr);
+          console.warn(clipErr);
         }
       }
-
-      // Si el navegador bloquea escritura directa de imagen, descargarla
       const a = document.createElement("a");
       a.href = currentMediaUrl;
-      a.download = "grafico_comentarista.png";
+      a.download = "infografia_comentarista.png";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast("📥 Imagen descargada lista para arrastrar a X");
+      showToast("📥 Imagen descargada");
     } catch (err) {
-      console.error("Error al copiar/descargar imagen:", err);
-      showToast("❌ Error al procesar la imagen");
+      console.error(err);
+      showToast("❌ Error con la imagen");
     }
   });
 
   btnOpenX.addEventListener("click", () => {
     const text = liveEditor.value;
-    const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   });
 
-  // Notificación Toast
+  // ==========================================
+  // 7. MODAL DE AJUSTES
+  // ==========================================
+  btnOpenSettings.addEventListener("click", () => {
+    settingsModal.style.display = "flex";
+  });
+
+  btnCloseSettings.addEventListener("click", () => {
+    settingsModal.style.display = "none";
+  });
+
+  btnSaveSettings.addEventListener("click", async () => {
+    const apiKey = cfgGeminiKey.value.trim();
+    const name = cfgUserName.value.trim();
+    const handle = cfgUserHandle.value.trim().replace("@", "");
+
+    try {
+      const res = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gemini_api_key: apiKey || null,
+          user_name: name || "Guillermo Vila",
+          user_handle: handle || "guivila"
+        })
+      });
+      if (!res.ok) throw new Error("Error guardando ajustes");
+      document.getElementById("preview-display-name").textContent = name;
+      document.getElementById("preview-handle").textContent = `@${handle}`;
+      settingsModal.style.display = "none";
+      showToast("💾 Ajustes guardados correctamente");
+    } catch (err) {
+      showToast("❌ Error al guardar ajustes");
+    }
+  });
+
+  // ==========================================
+  // 8. GRAFANA Y ARCHIVOS (OPCIONAL)
+  // ==========================================
+  async function loadDashboards() {
+    try {
+      const res = await fetch("/api/grafana/dashboards");
+      const data = await res.json();
+      grafanaDashboardSelect.innerHTML = '<option value="">-- Elige un Cuadro de Mando --</option>';
+      (data.dashboards || []).forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.uid;
+        opt.textContent = `${d.title} (${d.folderTitle || 'General'})`;
+        grafanaDashboardSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  grafanaDashboardSelect?.addEventListener("change", async (e) => {
+    const uid = e.target.value;
+    if (!uid) return;
+    try {
+      const res = await fetch(`/api/grafana/panels?uid=${encodeURIComponent(uid)}`);
+      const data = await res.json();
+      grafanaPanelSelect.innerHTML = '<option value="">-- Elige un Panel --</option>';
+      (data.panels || []).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `[ID ${p.id}] ${p.title}`;
+        grafanaPanelSelect.appendChild(opt);
+      });
+      grafanaPanelSelect.disabled = false;
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  btnRenderGrafana?.addEventListener("click", async () => {
+    const dashboardUid = grafanaDashboardSelect.value;
+    const panelId = grafanaPanelSelect.value;
+    if (!dashboardUid || !panelId) {
+      showToast("⚠️ Selecciona un dashboard y un panel");
+      return;
+    }
+    try {
+      showToast("⏳ Renderizando panel...");
+      const res = await fetch("/api/grafana/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dashboard_uid: dashboardUid,
+          panel_id: parseInt(panelId, 10),
+          from_time: grafanaRangeSelect.value,
+          to_time: "now"
+        })
+      });
+      const data = await res.json();
+      if (data.image_url) {
+        setMedia(data.image_url);
+        showToast("✅ Gráfico de Grafana cargado");
+      }
+    } catch (e) {
+      showToast("❌ Error al renderizar de Grafana");
+    }
+  });
+
+  tabBtnGrafana?.addEventListener("click", () => {
+    tabBtnGrafana.classList.add("active");
+    tabBtnLocal.classList.remove("active");
+    tabContentGrafana.classList.add("active");
+    tabContentLocal.classList.remove("active");
+  });
+
+  tabBtnLocal?.addEventListener("click", () => {
+    tabBtnLocal.classList.add("active");
+    tabBtnGrafana.classList.remove("active");
+    tabContentLocal.classList.add("active");
+    tabContentGrafana.classList.remove("active");
+  });
+
+  dropzone?.addEventListener("click", () => localFileInput?.click());
+
+  localFileInput?.addEventListener("change", async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const formData = new FormData();
+      formData.append("file", e.target.files[0]);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.image_url) setMedia(data.image_url);
+    }
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   let toastTimer = null;
   function showToast(message) {
     if (toastTimer) clearTimeout(toastTimer);
     toast.textContent = message;
     toast.classList.add("show");
-    toastTimer = setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3200);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
   }
 
-  // Inicializar
   initSystem();
   updateCharCounter();
 });

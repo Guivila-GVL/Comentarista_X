@@ -15,7 +15,10 @@ from app.core.grafana_client import (
     render_panel
 )
 from app.core.ai_engine import refine_tweet, modify_tweet_with_feedback
-from app.core.fact_checker import analyze_and_factcheck
+from app.core.fact_checker import (
+    process_idea_and_prepare_tweet,
+    update_infographic_custom
+)
 
 load_dotenv()
 
@@ -110,26 +113,41 @@ async def generate_variants(req: GenerateRequest):
     result = refine_tweet(req.idea, tone=req.tone or "Divulgativo", context_info=req.context_info or "")
     return result
 
-@app.post("/api/factcheck-and-generate")
-async def factcheck_and_generate(req: GenerateRequest):
+class InfographicUpdateRequest(BaseModel):
+    title: Optional[str] = "Infografía"
+    subtitle: Optional[str] = ""
+    cards: Optional[list] = []
+    instruction: Optional[str] = ""
+
+class ConfigRequest(BaseModel):
+    gemini_api_key: Optional[str] = None
+    user_name: Optional[str] = None
+    user_handle: Optional[str] = None
+
+@app.post("/api/search-and-draft")
+async def search_and_draft(req: GenerateRequest):
     """
-    Pipeline integral solicitado:
-    1. Verifica la afirmación y terminología (fact-checking).
-    2. Busca noticias reales y respaldo documental.
-    3. Genera una infografía 16:9 explicativa.
-    4. Genera variantes de tweets con datos contrastados y enlaces a fuentes.
+    PASO 1 y 2: Busca noticias y datos reales relacionados con la idea.
+    PASO 3: Redacta y prepara el tweet directamente para el simulador de X.
+    PASO 4: Estructura los 3 puntos de la infografía.
     """
     if not req.idea or not req.idea.strip():
         raise HTTPException(status_code=400, detail="La idea no puede estar vacía")
-    result = analyze_and_factcheck(req.idea)
+    result = process_idea_and_prepare_tweet(req.idea, tone=req.tone or "Divulgativo")
     return result
+
+@app.post("/api/factcheck-and-generate")
+async def factcheck_and_generate(req: GenerateRequest):
+    """Compatibilidad: Mapea al pipeline dinámico"""
+    if not req.idea or not req.idea.strip():
+        raise HTTPException(status_code=400, detail="La idea no puede estar vacía")
+    return process_idea_and_prepare_tweet(req.idea, tone=req.tone or "Divulgativo")
 
 @app.post("/api/refine")
 async def refine_tweet_post(req: RefineRequest):
     """
     Refinamiento iterativo guiado por los comentarios del usuario:
-    Toma el tweet que está actualmente en el simulador y aplica las modificaciones,
-    acortamientos, adiciones de datos o cambios de tono solicitados.
+    Aplica las modificaciones directamente sobre el tweet en vivo.
     """
     if not req.current_text or not req.current_text.strip():
         raise HTTPException(status_code=400, detail="El tweet actual está vacío")
@@ -143,6 +161,81 @@ async def refine_tweet_post(req: RefineRequest):
         tone=req.tone or "Divulgativo"
     )
     return result
+
+@app.post("/api/update-infographic")
+async def update_infographic_endpoint(req: InfographicUpdateRequest):
+    """
+    Permite modificar y regenerar la infografía al vuelo con las órdenes del usuario
+    o con las tarjetas editadas directamente.
+    """
+    cards = req.cards or []
+    # Si el usuario dio una orden textual de modificación sobre las tarjetas
+    if req.instruction:
+        instr_lower = req.instruction.lower()
+        # Modificar título si lo pide
+        if "título" in instr_lower or "titulo" in instr_lower:
+            parts = req.instruction.split(":", 1)
+            if len(parts) > 1:
+                req.title = parts[1].strip()
+        # Si pide modificar alguna tarjeta
+        for i, card in enumerate(cards):
+            target_str = f"tarjeta {i+1}"
+            if target_str in instr_lower or (i == 1 and "tarjeta 2" in instr_lower):
+                card["desc"] = req.instruction[:75]
+                card["val"] = "Dato Actualizado"
+
+    img_url = update_infographic_custom(
+        title=req.title or "Claves del Análisis",
+        subtitle=req.subtitle or "Datos e información contrastada",
+        cards=cards
+    )
+    return {
+        "status": "ok",
+        "infographic_url": img_url,
+        "infographic_data": {
+            "title": req.title,
+            "subtitle": req.subtitle,
+            "cards": cards
+        }
+    }
+
+@app.post("/api/config")
+async def update_config(req: ConfigRequest):
+    """Permite guardar claves y configuración directamente desde la UI."""
+    env_path = BASE_DIR.parent / ".env"
+    lines = []
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    
+    config_dict = {
+        "GEMINI_API_KEY": req.gemini_api_key,
+        "DEFAULT_USER_NAME": req.user_name,
+        "DEFAULT_USER_HANDLE": req.user_handle
+    }
+
+    new_lines = []
+    seen = set()
+    for line in lines:
+        matched = False
+        for k, v in config_dict.items():
+            if v is not None and line.startswith(f"{k}="):
+                new_lines.append(f"{k}={v}\n")
+                seen.add(k)
+                matched = True
+                break
+        if not matched:
+            new_lines.append(line)
+
+    for k, v in config_dict.items():
+        if v is not None and k not in seen:
+            new_lines.append(f"{k}={v}\n")
+
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+
+    load_dotenv(override=True)
+    return {"status": "ok", "message": "Configuración guardada correctamente"}
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):

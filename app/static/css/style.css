@@ -1120,3 +1120,312 @@ body {
   color: var(--text-primary);
 }
 
+/* ==========================================================================
+   NUEVO FLUJO: INVESTIGACIÓN, NOTICIAS E INFOGRAFÍA EDITABLE
+   ========================================================================== */
+.btn-settings-pill {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-settings-pill:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--accent-x-blue);
+}
+
+.research-card {
+  background: #0d1117;
+  border: 1px solid rgba(29, 155, 240, 0.25);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.research-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.research-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-x-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.research-explanation-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.45;
+  background: rgba(29, 155, 240, 0.06);
+  border-left: 3px solid var(--accent-x-blue);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.news-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.news-list-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.news-items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.news-item-card {
+  background: #161b22;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.news-item-card:hover {
+  border-color: rgba(29, 155, 240, 0.4);
+  background: #1a202c;
+}
+
+.news-item-title {
+  color: #1d9bf0;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.news-item-title:hover {
+  text-decoration: underline;
+}
+
+.news-item-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Infografía Card */
+.infographic-card {
+  background: #11141a;
+  border: 1px solid rgba(0, 186, 124, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.infographic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.info-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.badge-info-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 186, 124, 0.15);
+  color: var(--color-success);
+}
+
+.info-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.info-cards-preview-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.info-card-mini {
+  background: #161b22;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-card-mini-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.info-card-mini-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-card-mini-desc {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.info-order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label-sm {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.info-order-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.info-input-text {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-family: inherit;
+}
+
+.btn-sm-action {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.info-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-toggle-attached {
+  background: rgba(0, 186, 124, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(0, 186, 124, 0.3);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-attached.detached {
+  background: rgba(244, 33, 46, 0.15);
+  color: var(--color-danger);
+  border-color: rgba(244, 33, 46, 0.3);
+}
+
+/* Modal Ajustes */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  background: #16181c;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
