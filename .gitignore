@@ -24,6 +24,12 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# Media cache
+app/static/media/*.png
+app/static/media/*.jpg
+app/static/media/*.webp
+app/static/media/*.mp4
+
 # OS files
 .DS_Store
 Thumbs.db

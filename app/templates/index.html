@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comentarista 🎙️ | Asistente Editorial para X</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+</head>
+<body>
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-badge">🎙️</div>
+      <div>
+        <h1 class="logo-title">Comentarista</h1>
+        <p class="logo-subtitle">Asistente Editorial & Previsualizador de X</p>
+      </div>
+    </div>
+    <div class="header-status">
+      <div id="grafana-badge" class="status-pill status-checking">
+        <span class="status-dot"></span>
+        <span class="status-text">Grafana: Verificando...</span>
+      </div>
+      <div id="ai-badge" class="status-pill status-ai">
+        <span class="status-icon">✨</span>
+        <span class="status-text">IA: Activa</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL: SIDE-BY-SIDE -->
+  <main class="main-layout">
+    
+    <!-- PANEL IZQUIERDO: COMPOSITOR Y ASISTENCIA -->
+    <section class="panel panel-editor">
+      <div class="panel-header">
+        <h2 class="section-title">💡 1. Composición y Asistencia</h2>
+        <span class="tag-badge">Editor Inteligente</span>
+      </div>
+
+      <!-- Área de Entrada de la Idea -->
+      <div class="form-group">
+        <label for="raw-idea" class="input-label">
+          Idea, Datos o Apunte en Bruto
+          <span class="label-hint">Escribe sin preocuparte por el formato o las faltas</span>
+        </label>
+        <textarea 
+          id="raw-idea" 
+          class="custom-textarea" 
+          rows="4" 
+          placeholder="Ej: Hoy el precio del pool eléctrico ha marcado 0,00 €/MWh durante 6 horas por la gran producción eólica. Las baterías y el bombeo han estado absorbiendo excedentes a coste mínimo..."
+        ></textarea>
+      </div>
+
+      <!-- Selector de Tono -->
+      <div class="form-group">
+        <label class="input-label">Tono Deseado</label>
+        <div class="tone-selector">
+          <label class="tone-option">
+            <input type="radio" name="tone" value="Divulgativo" checked>
+            <span class="tone-pill">💡 Divulgativo</span>
+          </label>
+          <label class="tone-option">
+            <input type="radio" name="tone" value="Analítico">
+            <span class="tone-pill">📊 Analítico</span>
+          </label>
+          <label class="tone-option">
+            <input type="radio" name="tone" value="Impacto">
+            <span class="tone-pill">🚨 Impacto</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Selector Multimedia (Grafana vs Archivo Local) -->
+      <div class="form-group media-section">
+        <div class="media-tabs-header">
+          <label class="input-label">Recurso Multimedia</label>
+          <div class="tabs-nav">
+            <button type="button" id="tab-btn-grafana" class="tab-btn active">📊 Grafana Local</button>
+            <button type="button" id="tab-btn-local" class="tab-btn">📁 Subir Archivo</button>
+          </div>
+        </div>
+
+        <!-- Tab 1: Grafana Directo -->
+        <div id="tab-content-grafana" class="tab-content active">
+          <div class="grafana-grid">
+            <div class="select-field">
+              <label for="grafana-dashboard">Cuadro de Mando</label>
+              <select id="grafana-dashboard" class="custom-select">
+                <option value="">Cargando dashboards...</option>
+              </select>
+            </div>
+            <div class="select-field">
+              <label for="grafana-panel">Panel a Capturar</label>
+              <select id="grafana-panel" class="custom-select" disabled>
+                <option value="">Selecciona un dashboard primero</option>
+              </select>
+            </div>
+          </div>
+          <div class="grafana-actions-row">
+            <div class="select-field range-select">
+              <label for="grafana-range">Rango de Tiempo</label>
+              <select id="grafana-range" class="custom-select">
+                <option value="now-24h">Últimas 24 horas</option>
+                <option value="now-7d">Últimos 7 días</option>
+                <option value="now-30d">Últimos 30 días</option>
+                <option value="now/d">Hoy (Desde las 00:00h)</option>
+              </select>
+            </div>
+            <button type="button" id="btn-render-grafana" class="btn btn-secondary">
+              <span class="btn-icon">🔄</span> Cargar Gráfico de Grafana
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Archivo Local -->
+        <div id="tab-content-local" class="tab-content">
+          <div id="dropzone" class="dropzone">
+            <input type="file" id="local-file-input" accept="image/*,video/*" hidden>
+            <div class="dropzone-inner">
+              <span class="dropzone-icon">📥</span>
+              <p class="dropzone-text">Arrastra una imagen aquí o <strong>haz clic para examinar</strong></p>
+              <span class="dropzone-hint">Formatos soportados: PNG, JPG, WEBP, MP4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de Generación de IA -->
+      <button type="button" id="btn-generate-ai" class="btn btn-primary btn-block">
+        <span class="btn-icon">✨</span> Optimizar y Generar Variantes con IA
+      </button>
+
+      <!-- Variantes Generadas -->
+      <div id="variants-container" class="variants-section">
+        <h3 class="variants-title">Propuestas Sugeridas:</h3>
+        <div id="variants-list" class="variants-grid">
+          <!-- Se inyectan dinámicamente -->
+          <div class="variant-empty-state">
+            Escribe tu idea y pulsa <strong>"Optimizar y Generar"</strong> para ver variantes redactadas aquí.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL DERECHO: SIMULADOR DE X EN VIVO -->
+    <section class="panel panel-preview">
+      <div class="panel-header">
+        <h2 class="section-title">📱 2. Simulador de X (Feed Real)</h2>
+        <span class="tag-badge badge-live">En Vivo</span>
+      </div>
+
+      <!-- TARJETA DEL TWEET IDÉNTICA A X -->
+      <div class="x-card-container">
+        <article class="x-tweet-card">
+          <!-- Cabecera del tweet -->
+          <div class="tweet-header">
+            <div class="user-avatar" id="avatar-preview">GV</div>
+            <div class="user-meta">
+              <div class="user-line">
+                <span class="user-display-name" id="preview-display-name">Guillermo Vila</span>
+                <span class="badge-verified" title="Verificado">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="#1d9bf0">
+                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.79-4-4-4-.495 0-.965.084-1.4.238C14.55 2.475 13.18 1.6 11.6 1.6S8.65 2.475 8.01 3.738C7.575 3.584 7.105 3.5 6.61 3.5c-2.21 0-4 1.79-4 4 0 .495.084.965.238 1.4C1.575 9.55.7 10.92.7 12.5s.875 2.95 2.148 3.6c-.154.435-.238.905-.238 1.4 0 2.21 1.79 4 4 4 .495 0 .965-.084 1.4-.238.64 1.263 2.01 2.138 3.59 2.138s2.95-.875 3.59-2.138c.435.154.905.238 1.4.238 2.21 0 4-1.79 4-4 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.71 4.29l-3.5-3.5 1.41-1.41 2.09 2.09 5.73-5.73 1.41 1.41-7.14 7.14z"/>
+                  </svg>
+                </span>
+                <span class="user-handle" id="preview-handle">@guivila</span>
+                <span class="meta-dot">·</span>
+                <span class="meta-time">Ahora</span>
+              </div>
+            </div>
+            <div class="tweet-menu-icon">···</div>
+          </div>
+
+          <!-- Cuerpo editable del tweet -->
+          <div class="tweet-body">
+            <textarea 
+              id="live-tweet-editor" 
+              class="tweet-inline-editor" 
+              placeholder="¿Qué está pasando? Escribe o edita directamente aquí tu tweet final..."
+            ></textarea>
+          </div>
+
+          <!-- Medios adjuntos (Imagen de Grafana o Archivo) -->
+          <div id="media-preview-box" class="tweet-media-wrapper" style="display: none;">
+            <img id="tweet-image-preview" src="" alt="Gráfico adjunto" class="tweet-media-image">
+            <button type="button" id="btn-remove-media" class="btn-remove-media" title="Quitar imagen">✕</button>
+          </div>
+
+          <!-- Barra de interacciones simulada de X -->
+          <div class="tweet-footer-stats">
+            <div class="stat-item"><span class="icon">💬</span> <span>12</span></div>
+            <div class="stat-item"><span class="icon">🔁</span> <span>45</span></div>
+            <div class="stat-item"><span class="icon">❤️</span> <span>189</span></div>
+            <div class="stat-item"><span class="icon">📊</span> <span>2.4K</span></div>
+            <div class="stat-item"><span class="icon">🔖</span></div>
+            <div class="stat-item"><span class="icon">📤</span></div>
+          </div>
+        </article>
+      </div>
+
+      <!-- CONTADOR DE CARACTERES INTERACTIVO -->
+      <div class="counter-card">
+        <div class="counter-info">
+          <div class="counter-numbers">
+            <span id="char-count-current" class="char-current">0</span>
+            <span class="char-limit">/ 280</span>
+          </div>
+          <span id="char-status-badge" class="badge-status-ok">En Rango</span>
+        </div>
+        
+        <div class="counter-visual">
+          <svg class="progress-ring" width="40" height="40">
+            <circle class="progress-ring-bg" stroke="#2f3336" stroke-width="4" fill="transparent" r="16" cx="20" cy="20"/>
+            <circle id="progress-ring-circle" class="progress-ring-circle" stroke="#1d9bf0" stroke-width="4" fill="transparent" r="16" cx="20" cy="20"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- BARRA DE ACCIÓN EN 1 CLIC -->
+      <div class="actions-panel">
+        <button type="button" id="btn-copy-text" class="btn btn-action-copy">
+          <span class="btn-icon">📋</span> Copiar Texto
+        </button>
+        <button type="button" id="btn-copy-image" class="btn btn-action-copy" disabled>
+          <span class="btn-icon">🖼️</span> Copiar Imagen
+        </button>
+        <button type="button" id="btn-open-x" class="btn btn-action-launch">
+          <span class="btn-icon">🚀</span> Abrir en X
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST DE NOTIFICACIÓN DE COPIA -->
+  <div id="toast" class="toast">¡Texto copiado al portapapeles!</div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

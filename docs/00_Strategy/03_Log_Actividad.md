@@ -11,3 +11,6 @@ Tabla cronológica de avances, decisiones y cambios realizados en el proyecto.
 | **2026-10-07** | 18:05 | Definición de especificaciones de UI/Mockups y Casos de Uso del Comentarista. | IA | 🟢 Completado |
 | **2026-10-07** | 18:12 | **Aprobación de Arquitectura**: El usuario selecciona la **Opción B (Python Backend + Grafana)** para integración directa con métricas y paneles de energía. | Usuario | 🟢 Aprobado |
 | **2026-10-07** | 18:15 | Actualización de especificaciones técnicas con el conector de renderizado de Grafana (`/render/d-solo/...`). | IA | 🟢 Completado |
+| **2026-10-07** | 18:22 | Desarrollo del backend FastAPI (`app/main.py`), conector Grafana y motor de IA contextual. | IA | 🟢 Completado |
+| **2026-10-07** | 18:22 | Creación de la interfaz Web (`index.html`, `style.css`, `app.js`) con simulador idéntico a X y Vanilla CSS. | IA | 🟢 Completado |
+| **2026-10-07** | 18:23 | Creación del ejecutable `iniciar_comentarista.bat` y paso satisfactorio de las pruebas de integración (`test_app.py`). | IA | 🟢 Completado |
