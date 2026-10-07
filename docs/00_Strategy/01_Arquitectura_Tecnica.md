@@ -18,43 +18,45 @@ graph LR
 
 ---
 
-## 2. Comparativa de Alternativas Tecnológicas
+## 2. Decisión Arquitectónica: Opción B (Python Backend + Web UI + Conector Grafana)
 
-Para ofrecer la mejor experiencia en el ordenador personal del usuario (Windows), se evalúan dos enfoques principales:
+> **Decisión de Diseño (Aprobada por el Usuario - 07/10/2026):**  
+> Se selecciona la **Opción B (Arquitectura Python)** debido a la necesidad crítica de integrarse directamente con la instancia local de **Grafana** (`http://localhost:3000`), el motor de renderizado de imágenes de paneles de energía (`/render/d-solo/...`) y los scripts/datos del ecosistema de energía.
 
-| Criterio | Opción A: Web App Local Moderna (Next.js / Vite + Vanilla CSS) *(Recomendada)* | Opción B: Aplicación Local Python + Web Server (FastAPI / Flask + Vanilla JS) |
-| :--- | :--- | :--- |
-| **Experiencia de Usuario (UI/UX)** | ⭐⭐⭐⭐⭐ Interfaz fluida, idéntica a X, diseño dark mode reactivo, animaciones suaves. | ⭐⭐⭐⭐ Buena interfaz web mediante HTML/CSS/JS servido localmente. |
-| **Simulador de X (Tweet Preview)** | Componentes React reutilizables con renderizado en tiempo real y contador dinámico. | Renderizado DOM mediante Vanilla JS reactivo. |
-| **Acceso a Archivos Locales** | Vía API routes locales (`/api/media`) para explorar carpetas del ordenador. | Acceso directo al sistema de archivos mediante `os` / `pathlib`. |
-| **Integración con IA** | SDK de Google GenAI / Anthropic / OpenAI en backend Node.js. | SDK de Python (`google-genai`, `openai`, `anthropic`, etc.). |
-| **Facilidad de Ejecución** | Script `.bat` (`npm run dev`) que abre automáticamente el navegador en `localhost:3000`. | Script `.bat` (`python main.py`) que abre el navegador en `localhost:8000`. |
-| **Alineación con otros proyectos** | Idéntico a `2026_Proyecto_Certificado_Humano` (Next.js, Vanilla CSS). | Idéntico al backend de `2026_Proyecto_Energia_Graficos` (Python). |
+### 2.1. Comparativa y Justificación
+
+| Criterio | Opción B: Python Backend + Web UI *(SELECCIONADA)* |
+| :--- | :--- |
+| **Integración con Grafana** | ⭐⭐⭐⭐⭐ Nativa y directa. Usa `requests` y la API de Grafana para extraer o renderizar paneles PNG en tiempo real con rangos temporales dinámicos (`now-24h`, fechas históricas). |
+| **Acceso a BBDD y Scripts** | ⭐⭐⭐⭐⭐ Comunicación directa con la base de datos PostgreSQL / TimescaleDB de energía y reutilización de librerías Python existentes (`psycopg2`, `pandas`). |
+| **Experiencia de Usuario (UI/UX)** | ⭐⭐⭐⭐⭐ Interfaz web servida en `localhost:8000` con HTML5 semántico, **Vanilla CSS** premium (Dark Mode idéntico a X) y Vanilla JS reactivo. |
+| **Simulador de X** | Componente visual reactivo con contador circular de caracteres SVG, preview de medios y copia con 1 clic al portapapeles. |
+| **Ejecución en Windows** | Lanzador `iniciar_comentarista.bat` de un clic que inicia el servidor Python y abre el navegador automáticamente. |
 
 ---
 
-## 3. Arquitectura Recomendada (Opción Híbrida / Web App Local)
+## 3. Componentes de la Arquitectura Seleccionada
 
-Adoptamos una arquitectura orientada a la **máxima simplicidad de uso** para el usuario:
+### 3.1. Servidor Backend en Python
+- **Framework**: Python HTTP / FastAPI / Starlette ligero con servidor ASGI (`uvicorn`, ya disponible en el sistema).
+- **Módulos Core**:
+  1. `core/grafana_client.py`: Conector autenticado con Grafana (`http://localhost:3000`):
+     - Catálogo de dashboards disponibles (PVPC, Generación, Demanda, Balance).
+     - Renderizado bajo demanda de paneles PNG mediante `/render/d-solo/...` especificando ancho, alto y ventana de tiempo (`from`/`to`).
+  2. `core/ai_assistant.py`: Motor de refinamiento y corrección ortográfica de tweets (soporte para Google Gemini / OpenAI / prompts parametrizados).
+  3. `core/media_manager.py`: Gestor de capturas, imágenes temporales y gráficos generados.
+  4. `core/clipboard.py` y endpoints REST: API para suministrar datos limpios al frontend y sincronizar con portapapeles.
 
-### 3.1. Frontend (Capa de Presentación)
-- **Tecnología**: Next.js (App Router) o Vite + React con **Vanilla CSS** (siguiendo las directrices del workspace).
-- **Diseño visual**:
-  - Tema oscuro de alto contraste inspirado en la estética oficial de X (Black / Dark Slate / Accent Blue `#1d9bf0`).
-  - Tipografía moderna (Inter / Twitter Chirp aesthetic).
-  - Dos columnas de trabajo:
-    - **Columna Izquierda (Control & IA)**: Entrada de idea, selector de tono, selector de fuente de datos/imágenes, variantes generadas.
-    - **Columna Derecha (Preview & Acción)**: Tweet Card idéntica a X, contador de caracteres con semáforo (verde/ámbar/rojo), botones de acción rápida ("Copiar Texto", "Copiar Imagen", "Lanzar en X").
+### 3.2. Frontend Web (Servido Localmente)
+- **Estructura**:
+  - `app/templates/index.html`: Estructura semántica de dos paneles (Compositor & Simulador X).
+  - `app/static/css/style.css`: Vanilla CSS con diseño ultra premium, estética oscura de X, tipografía Inter y microinteracciones fluidas.
+  - `app/static/js/app.js`: Lógica de cliente (actualización en vivo del Tweet, contador circular de caracteres, selección de paneles de Grafana, copia al portapapeles con feedback visual).
 
-### 3.2. Backend & Servicios Locales
-- **API Routes**:
-  - `/api/generate`: Recibe la idea, el tono y las instrucciones del usuario; llama al modelo de IA para sugerir variantes pulidas y corregidas.
-  - `/api/media`: Permite listar o seleccionar archivos multimedia de carpetas locales (ej. gráficos recientes generados en proyectos de energía).
-  - `/api/history`: Guarda un registro local (SQLite o JSON) con el historial de publicaciones preparadas.
-
-### 3.3. Integración con el Entorno Local
-- Archivo ejecutable de un clic en Windows:
-  - `iniciar_comentarista.bat`: Lanza el servidor local en segundo plano y abre la ventana en el navegador predeterminado de inmediato.
+### 3.3. Integración con Grafana Local
+- **URL Base**: `http://localhost:3000`
+- **Render Engine**: Servicio integrado de renderizado PNG (`/render/d-solo/<slug>/<uid>?panelId=<id>&width=1200&height=630&from=<from>&to=<to>`).
+- **Proporción de Imagen para X**: Render optimizado a 1200x675 px (proporción 16:9, el estándar óptimo de visualización en tarjetas de X).
 
 ---
 

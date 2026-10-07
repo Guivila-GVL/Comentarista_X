@@ -22,13 +22,15 @@ La aplicación utiliza un diseño de dos paneles dividido al 50%/50% (o 45%/55% 
 | Tono deseado:                           | │ 6 horas consecutivas a 0,00 €/MWh.  │ |
 | ( ) Analítico  (*) Divulgativo  ( ) X   | │ Las baterías aprovechan el exceso.  │ |
 |                                         | │                                     │ |
-| 📊 Recurso Multimedia:                  | │ ┌─────────────────────────────────┐ │ |
-| [📁 Seleccionar Gráfico de Energía...]  | │ │  [ Imagen / Gráfico ESIOS ]     │ │ |
-| Archivo: curva_precios_20261007.png     | │ └─────────────────────────────────┘ │ |
-|                                         | │ 💬 0    🔁 0    ❤️ 0    📊 1        │ |
-| [ ✨ Generar Variantes con IA ]         | └─────────────────────────────────────┘ |
-|                                         |                                         |
-| Variantes sugeridas:                    | 📏 184 / 280 caracteres [🟢 En rango]   |
+| 📊 Fuente Multimedia:                  | │ ┌─────────────────────────────────┐ │ |
+| [*] Grafana Local   ( ) Archivo Local   | │ │                                 │ │ |
+| Dashboard: [⚡ Precios ESIOS Hoy   ▼]   | │ │  [ Render Grafana Panel 1200x675]│ │ |
+| Panel:     [Curva Horaria PVPC    ▼]   | │ │                                 │ │ |
+| Rango:     [Últimas 24 horas      ▼]   | │ └─────────────────────────────────┘ │ |
+| [ 🔄 Renderizar Panel ]                 | │ 💬 0    🔁 0    ❤️ 0    📊 1        │ |
+|                                         | └─────────────────────────────────────┘ |
+| [ ✨ Generar Variantes con IA ]         |                                         |
+|                                         | 📏 184 / 280 caracteres [🟢 En rango]   |
 | [1] Corto e impactante                  |                                         |
 | [2] Didáctico y detallado               | ACCIONES RÁPIDAS:                       |
 | [3] Formato pregunta/debate             | [ 📋 Copiar Texto ] [ 🖼️ Copiar Imagen] |
