@@ -1,41 +1,20 @@
-# Node dependencies
-node_modules/
-.next/
-out/
-build/
-dist/
-
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-.venv/
 venv/
-env/
+.venv/
 
-# Environment variables & secrets
+# Environment
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-*.log
+# Generated Images / Cache
+renders/
+captures/
+temp/
+*.png
+*.jpg
 
-# Media cache
-app/static/media/*.png
-app/static/media/*.jpg
-app/static/media/*.webp
-app/static/media/*.mp4
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# IDE & Editor
+# IDE
 .vscode/
-.idea/
-*.swp
+Thumbs.db
