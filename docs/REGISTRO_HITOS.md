@@ -1,5 +1,20 @@
 # Registro Histórico de Hitos y Tareas — Comentarista X
 
+### [11/11/2026 14:04:30] ✅ Validar Conexión con Grafana Renderer (8081)
+
+- **ID Tarea:** `26`
+- **Prioridad:** ALTA
+- **Tipo de Hito:** `manual`
+- **Objetivo / Target:** ``
+- **Resultado Técnico:** Conexión con Grafana Image Renderer (8081) y Grafana (3000) validada con éxito. Se comprobó el endpoint /healthz y /version del renderer (Chromium headless en Debian). Se añadieron check_renderer_health y render_hourly_price_panel en app/core/grafana_client.py, y endpoints /api/grafana/renderer/health y /api/grafana/render-hourly-price en FastAPI. Se descargó y verificó en disco la captura PNG (1200x675 px, 16:9, formato PNG válido) del panel de precio horario de Grafana (pvpc-dashboard-maestro, panel 105: Curva Horaria 24h - Precio PVPC de Hoy). Pruebas test_grafana_renderer.py y test_app.py superadas al 100% y cambios sincronizados en Git.
+- **Checklist de Protocolo General:**
+  - [x] Documentación en `/docs` registrada
+  - [x] Bitácora en OneNote sincronizada (01. Resumen y 02. Listado de Actividades)
+  - [x] Git Snapshot y Push a repositorio remoto procesado
+  - [x] Conformidad con Skills y Patrones de `0000_Utilidades/01_Skills`
+
+---
+
 ### [11/11/2026 14:02:00] ✅ Validar Conexión con Grafana Renderer (8081)
 
 - **ID Tarea:** `26`
