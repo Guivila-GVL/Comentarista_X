@@ -1,5 +1,20 @@
 # Registro Histórico de Hitos y Tareas — Comentarista X
 
+### [11/11/2026 13:53:31] ✅ Me ha dado fallo al arrancar el programa de comentarista, el puerto...
+
+- **ID Tarea:** `65`
+- **Prioridad:** ALTA
+- **Tipo de Hito:** `http_200`
+- **Objetivo / Target:** `http://127.0.0.1:8000`
+- **Resultado Técnico:** Diagnostico y resolucion completa del problema en puerto 8000: 1. Se identifico que el servidor Comentarista ya estaba activo y funcionando en segundo plano mediante pythonw.exe (lanzado por el ecosistema de Robot Organizador), respondiendo 200 OK. 2. El fallo reportado por el usuario ocurria porque el script manual iniciar_comentarista.bat intentaba forzar un nuevo bind en el puerto 8000 con uvicorn sin chequear si ya estaba escuchando, disparando WinError 10013. 3. Se mejoro iniciar_comentarista.bat anadiendo verificacion previa de socket: si el puerto 8000 ya esta activo, abre directamente el navegador en http://localhost:8000 sin colisionar ni bloquearse; si no lo esta, arranca uvicorn normalmente. 4. Se anadio script de diagnostico verificar_estado_8000.py y se verifico respuesta 200 OK en /, /api/status y /docs. Pruebas de integracion test_app.py 100% superadas.
+- **Checklist de Protocolo General:**
+  - [x] Documentación en `/docs` registrada
+  - [x] Bitácora en OneNote sincronizada (01. Resumen y 02. Listado de Actividades)
+  - [x] Git Snapshot y Push a repositorio remoto procesado
+  - [x] Conformidad con Skills y Patrones de `0000_Utilidades/01_Skills`
+
+---
+
 *Orden cronológico inverso: de última completada (#6) a primera histórica (#1)*
 
 ---
