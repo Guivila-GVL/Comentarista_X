@@ -19,11 +19,19 @@ def run_tests():
     status_data = r.json()
     print("[PASS] Status:", status_data)
 
-    print("\n--- 3. Testing Grafana Dashboards ---")
+    print("\n--- 3. Testing Grafana Dashboards & Renderer ---")
     r = client.get("/api/grafana/dashboards")
     assert r.status_code == 200, f"Dashboards failed: {r.status_code}"
     dbs = r.json().get("dashboards", [])
     print(f"[PASS] Grafana Dashboards count: {len(dbs)}")
+
+    r_renderer = client.get("/api/grafana/renderer/health")
+    assert r_renderer.status_code == 200, f"Renderer health failed: {r_renderer.status_code}"
+    print("[PASS] Grafana Renderer (8081) Health:", r_renderer.json())
+
+    r_render_hourly = client.post("/api/grafana/render-hourly-price")
+    assert r_render_hourly.status_code == 200, f"Render hourly price failed: {r_render_hourly.status_code}"
+    print("[PASS] Render hourly price panel PNG:", r_render_hourly.json()["image_url"])
 
     print("\n--- 4. Testing Search-and-Draft (Caso: RESA) ---")
     r = client.post("/api/search-and-draft", json={

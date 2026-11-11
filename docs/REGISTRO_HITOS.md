@@ -1,5 +1,26 @@
 # Registro Histórico de Hitos y Tareas — Comentarista X
 
+### [11/11/2026 14:02:00] ✅ Validar Conexión con Grafana Renderer (8081)
+
+- **ID Tarea:** `26`
+- **Prioridad:** ALTA
+- **Tipo de Hito:** `grafana_renderer_validation`
+- **Objetivo / Target:** `http://localhost:8081` & `http://localhost:3000`
+- **Resultado Técnico:** Validación integral de conectividad y renderizado con Grafana Image Renderer (puerto 8081):
+  1. Conexión directa y comprobación de salud en `http://localhost:8081/healthz` y `/version` (motor Chromium headless sobre Debian trixie).
+  2. Integración en `app/core/grafana_client.py` con `GRAFANA_RENDERER_URL`, `check_renderer_health()` y endpoint `/api/grafana/renderer/health` en FastAPI.
+  3. Corrección del generador de nombres de archivo de `os.times()[4]` (que retornaba 0 constante en Windows) a `time.time()`.
+  4. Implementación y ejecución de `render_hourly_price_panel` para el panel de precio horario de Grafana (`pvpc-dashboard-maestro`, panel 105: *Curva Horaria 24h - Precio PVPC de Hoy*).
+  5. Verificación física del archivo PNG descargado: firma de 8 bytes válida, resolución exacta 1200x675 px (proporción óptima 16:9 para X) y 22.179 bytes.
+  6. Suite automatizada `test_grafana_renderer.py` y `test_app.py` 100% superadas.
+- **Checklist de Protocolo General:**
+  - [x] Documentación en `/docs` registrada
+  - [x] Endpoint de comprobación y renderizado directo implementados
+  - [x] Captura PNG de precio horario descargada y validada en disco
+  - [x] Pruebas unitarias y de integración superadas al 100%
+
+---
+
 ### [11/11/2026 13:53:31] ✅ Me ha dado fallo al arrancar el programa de comentarista, el puerto...
 
 - **ID Tarea:** `65`

@@ -10,9 +10,11 @@ from dotenv import load_dotenv
 
 from app.core.grafana_client import (
     check_grafana_health,
+    check_renderer_health,
     list_dashboards,
     get_dashboard_panels,
-    render_panel
+    render_panel,
+    render_hourly_price_panel
 )
 from app.core.ai_engine import refine_tweet, modify_tweet_with_feedback
 from app.core.fact_checker import (
@@ -104,6 +106,30 @@ async def render_grafana_panel(req: RenderGrafanaRequest):
     )
     if not img_url:
         raise HTTPException(status_code=500, detail="Error al renderizar la imagen desde Grafana")
+    return {"status": "ok", "image_url": img_url}
+
+@app.get("/api/grafana/renderer/health")
+async def get_renderer_health():
+    """Comprueba el estado directo del servicio Grafana Image Renderer (8081)."""
+    return check_renderer_health()
+
+@app.post("/api/grafana/render-hourly-price")
+async def render_hourly_price(
+    dashboard_uid: Optional[str] = "pvpc-dashboard-maestro",
+    panel_id: Optional[int] = 105,
+    from_time: Optional[str] = "now/d",
+    to_time: Optional[str] = "now"
+):
+    """Renderiza de forma directa la captura del panel de precio horario de Grafana."""
+    img_url = render_hourly_price_panel(
+        dashboard_uid=dashboard_uid or "pvpc-dashboard-maestro",
+        panel_id=panel_id or 105,
+        from_time=from_time or "now/d",
+        to_time=to_time or "now",
+        output_dir=str(MEDIA_DIR)
+    )
+    if not img_url:
+        raise HTTPException(status_code=500, detail="Error al renderizar el panel de precio horario")
     return {"status": "ok", "image_url": img_url}
 
 @app.post("/api/generate")

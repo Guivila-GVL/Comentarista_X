@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GRAFANA_URL = os.getenv("GRAFANA_URL", "http://localhost:3000").rstrip("/")
+GRAFANA_RENDERER_URL = os.getenv("GRAFANA_RENDERER_URL", "http://localhost:8081").rstrip("/")
 GRAFANA_AUTH = os.getenv("GRAFANA_AUTH", "Basic YWRtaW46NjM3M0d1aWxsZQ==")
 
 def get_headers() -> Dict[str, str]:
@@ -15,15 +17,42 @@ def get_headers() -> Dict[str, str]:
         headers["Authorization"] = GRAFANA_AUTH
     return headers
 
+def check_renderer_health() -> Dict[str, Any]:
+    """Comprueba el estado directo del servicio Grafana Image Renderer (puerto 8081)."""
+    try:
+        r = requests.get(f"{GRAFANA_RENDERER_URL}/healthz", timeout=3)
+        if r.status_code == 200:
+            version = "ok"
+            try:
+                v_res = requests.get(f"{GRAFANA_RENDERER_URL}/version", timeout=2)
+                if v_res.status_code == 200:
+                    version = v_res.text.strip()
+            except Exception:
+                pass
+            return {
+                "status": "ok",
+                "service": "Grafana Image Renderer",
+                "url": GRAFANA_RENDERER_URL,
+                "version": version
+            }
+        return {"status": "error", "message": f"HTTP {r.status_code}", "url": GRAFANA_RENDERER_URL}
+    except Exception as e:
+        return {"status": "offline", "message": str(e), "url": GRAFANA_RENDERER_URL}
+
 def check_grafana_health() -> Dict[str, Any]:
-    """Comprueba el estado del servidor local de Grafana."""
+    """Comprueba el estado del servidor local de Grafana y del Renderer asociado."""
+    renderer_info = check_renderer_health()
     try:
         r = requests.get(f"{GRAFANA_URL}/api/health", headers=get_headers(), timeout=3)
         if r.status_code == 200:
-            return {"status": "ok", "version": r.json().get("version", "unknown")}
-        return {"status": "error", "message": f"HTTP {r.status_code}"}
+            return {
+                "status": "ok",
+                "version": r.json().get("version", "unknown"),
+                "renderer": renderer_info
+            }
+        return {"status": "error", "message": f"HTTP {r.status_code}", "renderer": renderer_info}
     except Exception as e:
-        return {"status": "offline", "message": str(e)}
+        return {"status": "offline", "message": str(e), "renderer": renderer_info}
 
 def list_dashboards() -> List[Dict[str, Any]]:
     """Obtiene la lista de cuadros de mando disponibles en Grafana."""
@@ -118,7 +147,8 @@ def render_panel(
                 output_dir = os.path.join(os.path.dirname(__file__), "..", "static", "media")
             
             os.makedirs(output_dir, exist_ok=True)
-            filename = f"grafana_{dashboard_uid}_p{panel_id}_{int(os.times()[4])}.png"
+            timestamp = int(time.time())
+            filename = f"grafana_{dashboard_uid}_p{panel_id}_{timestamp}.png"
             file_path = os.path.join(output_dir, filename)
             
             with open(file_path, "wb") as f:
@@ -132,3 +162,23 @@ def render_panel(
     except Exception as e:
         print(f"[GrafanaClient] Excepción durante el renderizado: {e}")
         return None
+
+def render_hourly_price_panel(
+    dashboard_uid: str = "pvpc-dashboard-maestro",
+    panel_id: int = 105,
+    from_time: str = "now/d",
+    to_time: str = "now",
+    output_dir: Optional[str] = None
+) -> Optional[str]:
+    """
+    Renderiza de forma directa el panel de precio horario de la energía (por defecto PVPC Hoy).
+    """
+    return render_panel(
+        dashboard_uid=dashboard_uid,
+        panel_id=panel_id,
+        from_time=from_time,
+        to_time=to_time,
+        width=1200,
+        height=675,
+        output_dir=output_dir
+    )
